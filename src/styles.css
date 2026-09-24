@@ -5,17 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Design system — "Settle This Makan"
+ * Receipt-inspired: cream paper slips on a warm blush field, monospaced
+ * figures, teal rule lines and an ink-red accent for human moments.
  */
 
 @theme inline {
@@ -46,6 +38,12 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+  --color-paper: var(--paper);
+  --color-paper-line: var(--paper-line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-stamp: var(--stamp);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -59,77 +57,93 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-hand: "Caveat", ui-rounded, cursive;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 0.5rem;
+
+  /* warm blush field the receipts sit on */
+  --background: oklch(0.9 0.045 34);
+  --foreground: oklch(0.26 0.02 60);
+
+  /* cream receipt paper */
+  --paper: oklch(0.968 0.014 95);
+  --paper-line: oklch(0.88 0.02 95);
+  --ink: oklch(0.26 0.02 60);
+  --ink-soft: oklch(0.52 0.02 60);
+  --rule: oklch(0.52 0.1 165);
+  --stamp: oklch(0.58 0.19 24);
+
+  --card: oklch(0.968 0.014 95);
+  --card-foreground: oklch(0.26 0.02 60);
+  --popover: oklch(0.968 0.014 95);
+  --popover-foreground: oklch(0.26 0.02 60);
+  --primary: oklch(0.42 0.1 168);
+  --primary-foreground: oklch(0.97 0.014 95);
+  --secondary: oklch(0.93 0.02 95);
+  --secondary-foreground: oklch(0.3 0.02 60);
+  --muted: oklch(0.93 0.015 95);
+  --muted-foreground: oklch(0.52 0.02 60);
+  --accent: oklch(0.88 0.06 34);
+  --accent-foreground: oklch(0.3 0.03 40);
+  --destructive: oklch(0.58 0.19 24);
+  --destructive-foreground: oklch(0.97 0.014 95);
+  --border: oklch(0.85 0.02 90);
+  --input: oklch(0.82 0.02 90);
+  --ring: oklch(0.52 0.1 165);
+  --chart-1: oklch(0.52 0.1 165);
+  --chart-2: oklch(0.58 0.19 24);
+  --chart-3: oklch(0.66 0.14 70);
+  --chart-4: oklch(0.55 0.12 250);
+  --chart-5: oklch(0.6 0.1 320);
+  --sidebar: oklch(0.968 0.014 95);
+  --sidebar-foreground: oklch(0.26 0.02 60);
+  --sidebar-primary: oklch(0.42 0.1 168);
+  --sidebar-primary-foreground: oklch(0.97 0.014 95);
+  --sidebar-accent: oklch(0.93 0.02 95);
+  --sidebar-accent-foreground: oklch(0.3 0.02 60);
+  --sidebar-border: oklch(0.85 0.02 90);
+  --sidebar-ring: oklch(0.52 0.1 165);
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: oklch(0.24 0.02 40);
+  --foreground: oklch(0.94 0.012 95);
+  --paper: oklch(0.29 0.015 60);
+  --paper-line: oklch(0.38 0.015 60);
+  --ink: oklch(0.94 0.012 95);
+  --ink-soft: oklch(0.74 0.015 80);
+  --rule: oklch(0.7 0.11 165);
+  --stamp: oklch(0.7 0.16 24);
+  --card: oklch(0.29 0.015 60);
+  --card-foreground: oklch(0.94 0.012 95);
+  --popover: oklch(0.29 0.015 60);
+  --popover-foreground: oklch(0.94 0.012 95);
+  --primary: oklch(0.7 0.11 165);
+  --primary-foreground: oklch(0.22 0.02 60);
+  --secondary: oklch(0.34 0.015 60);
+  --secondary-foreground: oklch(0.94 0.012 95);
+  --muted: oklch(0.34 0.015 60);
+  --muted-foreground: oklch(0.74 0.015 80);
+  --accent: oklch(0.38 0.03 40);
+  --accent-foreground: oklch(0.94 0.012 95);
+  --destructive: oklch(0.7 0.16 24);
+  --destructive-foreground: oklch(0.22 0.02 60);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: oklch(0.7 0.11 165);
+  --sidebar: oklch(0.29 0.015 60);
+  --sidebar-foreground: oklch(0.94 0.012 95);
+  --sidebar-primary: oklch(0.7 0.11 165);
+  --sidebar-primary-foreground: oklch(0.22 0.02 60);
+  --sidebar-accent: oklch(0.34 0.015 60);
+  --sidebar-accent-foreground: oklch(0.94 0.012 95);
+  --sidebar-border: oklch(1 0 0 / 14%);
+  --sidebar-ring: oklch(0.7 0.11 165);
 }
 
 @layer base {
@@ -140,5 +154,112 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    /* faint paper-grain over the blush field */
+    background-image: radial-gradient(
+      oklch(0 0 0 / 3.5%) 0.5px,
+      transparent 0.5px
+    );
+    background-size: 4px 4px;
   }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+}
+
+/* A cream receipt slip with torn zigzag edges top and bottom. */
+@utility receipt-paper {
+  position: relative;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  --tear: polygon(
+    0 8px,
+    3% 0,
+    6% 8px,
+    9% 0,
+    12% 8px,
+    15% 0,
+    18% 8px,
+    21% 0,
+    24% 8px,
+    27% 0,
+    30% 8px,
+    33% 0,
+    36% 8px,
+    39% 0,
+    42% 8px,
+    45% 0,
+    48% 8px,
+    51% 0,
+    54% 8px,
+    57% 0,
+    60% 8px,
+    63% 0,
+    66% 8px,
+    69% 0,
+    72% 8px,
+    75% 0,
+    78% 8px,
+    81% 0,
+    84% 8px,
+    87% 0,
+    90% 8px,
+    93% 0,
+    96% 8px,
+    99% 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    99% 100%,
+    96% calc(100% - 8px),
+    93% 100%,
+    90% calc(100% - 8px),
+    87% 100%,
+    84% calc(100% - 8px),
+    81% 100%,
+    78% calc(100% - 8px),
+    75% 100%,
+    72% calc(100% - 8px),
+    69% 100%,
+    66% calc(100% - 8px),
+    63% 100%,
+    60% calc(100% - 8px),
+    57% 100%,
+    54% calc(100% - 8px),
+    51% 100%,
+    48% calc(100% - 8px),
+    45% 100%,
+    42% calc(100% - 8px),
+    39% 100%,
+    36% calc(100% - 8px),
+    33% 100%,
+    30% calc(100% - 8px),
+    27% 100%,
+    24% calc(100% - 8px),
+    21% 100%,
+    18% calc(100% - 8px),
+    15% 100%,
+    12% calc(100% - 8px),
+    9% 100%,
+    6% calc(100% - 8px),
+    3% 100%,
+    0 calc(100% - 8px)
+  );
+  clip-path: var(--tear);
+}
+
+/* Dotted leader rule between a label and its amount. */
+@utility leader {
+  flex: 1 1 auto;
+  margin: 0 0.5rem;
+  border-bottom: 1px dotted var(--color-paper-line);
+  transform: translateY(-0.25rem);
+}
+
+@utility tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
