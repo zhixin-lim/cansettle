@@ -18,9 +18,15 @@ Everything starts empty. Your session is kept on your own device only, so a refr
 
 ## Look and feel
 
-Receipt-inspired: paper-toned surfaces, perforated/torn edges, a monospace numeric face for amounts against an expressive display face for headings, subtle imperfections. Warm and a bit quirky, but the numbers always read cleanly and have the strongest hierarchy. Singlish used sparingly in moments of feedback ("Steady — everything tallies ✓"), never in instructions.
+Taking the two references together: the thermal-receipt discipline of the first (monospaced rows, dotted rules, QTY / ITEM / AMT columns, a heavy centred wordmark) with the warmth of the second (soft off-white paper on a warm coloured field, zigzag torn top and bottom edges, a chunky playful logotype, a small ink-red accent for the human moments).
 
-I'll set this up as reusable design tokens so when you send the two reference images I can retune the palette and type in one place rather than rebuilding screens.
+Concretely:
+
+- Each bill renders as an actual paper slip: cream paper card, zigzag torn edges top and bottom, sitting on a warm blush/clay background.
+- Items laid out in receipt columns with dotted leader rules; amounts right-aligned in a monospaced face so the decimals line up.
+- Headings in a chunky rounded display face; instructions in a clean sans; one teal-green rule colour and one ink-red accent used for signatures, "Thank you" moments and warnings.
+- Small tactile touches: a faint paper texture, slight rotation on stacked bills, a stamped "✓ TALLIES" mark on a reconciled bill, a perforated tear line above the final settlement total.
+- Financial figures always outrank decoration — the numbers stay large, monospaced and high-contrast. No cartoon illustration, no gradients, no dashboard chrome.
 
 ## Technical section
 
