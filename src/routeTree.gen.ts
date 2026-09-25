@@ -10,33 +10,60 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettleRouteImport } from './routes/settle'
+import { Route as SettleIndexRouteImport } from './routes/settle.index'
+import { Route as SettleParticipantsRouteImport } from './routes/settle.participants'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettleRoute = SettleRouteImport.update({
+  id: '/settle',
+  path: '/settle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettleIndexRoute = SettleIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettleRoute,
+} as any)
+const SettleParticipantsRoute = SettleParticipantsRouteImport.update({
+  id: '/participants',
+  path: '/participants',
+  getParentRoute: () => SettleRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settle': typeof SettleRouteWithChildren
+  '/settle/participants': typeof SettleParticipantsRoute
+  '/settle/': typeof SettleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settle/participants': typeof SettleParticipantsRoute
+  '/settle': typeof SettleIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settle': typeof SettleRouteWithChildren
+  '/settle/participants': typeof SettleParticipantsRoute
+  '/settle/': typeof SettleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/settle' | '/settle/participants' | '/settle/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/settle/participants' | '/settle'
+  id: '__root__' | '/' | '/settle' | '/settle/participants' | '/settle/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettleRoute: typeof SettleRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +75,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settle': {
+      id: '/settle'
+      path: '/settle'
+      fullPath: '/settle'
+      preLoaderRoute: typeof SettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settle/': {
+      id: '/settle/'
+      path: '/'
+      fullPath: '/settle/'
+      preLoaderRoute: typeof SettleIndexRouteImport
+      parentRoute: typeof SettleRoute
+    }
+    '/settle/participants': {
+      id: '/settle/participants'
+      path: '/participants'
+      fullPath: '/settle/participants'
+      preLoaderRoute: typeof SettleParticipantsRouteImport
+      parentRoute: typeof SettleRoute
+    }
   }
 }
 
+interface SettleRouteChildren {
+  SettleParticipantsRoute: typeof SettleParticipantsRoute
+  SettleIndexRoute: typeof SettleIndexRoute
+}
+
+const SettleRouteChildren: SettleRouteChildren = {
+  SettleParticipantsRoute: SettleParticipantsRoute,
+  SettleIndexRoute: SettleIndexRoute,
+}
+
+const SettleRouteWithChildren =
+  SettleRoute._addFileChildren(SettleRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettleRoute: SettleRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
