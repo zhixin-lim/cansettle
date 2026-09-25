@@ -15,6 +15,7 @@ import { Route as SettleIndexRouteImport } from './routes/settle.index'
 import { Route as SettleBillsRouteImport } from './routes/settle.bills'
 import { Route as SettleParticipantsRouteImport } from './routes/settle.participants'
 import { Route as SettleBillsIndexRouteImport } from './routes/settle.bills.index'
+import { Route as SettleBillsBillIdRouteImport } from './routes/settle.bills.$billId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const SettleBillsIndexRoute = SettleBillsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => SettleBillsRoute,
 } as any)
+const SettleBillsBillIdRoute = SettleBillsBillIdRouteImport.update({
+  id: '/$billId',
+  path: '/$billId',
+  getParentRoute: () => SettleBillsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,12 +59,14 @@ export interface FileRoutesByFullPath {
   '/settle/bills': typeof SettleBillsRouteWithChildren
   '/settle/participants': typeof SettleParticipantsRoute
   '/settle/': typeof SettleIndexRoute
+  '/settle/bills/$billId': typeof SettleBillsBillIdRoute
   '/settle/bills/': typeof SettleBillsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settle/participants': typeof SettleParticipantsRoute
   '/settle': typeof SettleIndexRoute
+  '/settle/bills/$billId': typeof SettleBillsBillIdRoute
   '/settle/bills': typeof SettleBillsIndexRoute
 }
 export interface FileRoutesById {
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/settle/bills': typeof SettleBillsRouteWithChildren
   '/settle/participants': typeof SettleParticipantsRoute
   '/settle/': typeof SettleIndexRoute
+  '/settle/bills/$billId': typeof SettleBillsBillIdRoute
   '/settle/bills/': typeof SettleBillsIndexRoute
 }
 export interface FileRouteTypes {
@@ -78,9 +87,15 @@ export interface FileRouteTypes {
     | '/settle/bills'
     | '/settle/participants'
     | '/settle/'
+    | '/settle/bills/$billId'
     | '/settle/bills/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settle/participants' | '/settle' | '/settle/bills'
+  to:
+    | '/'
+    | '/settle/participants'
+    | '/settle'
+    | '/settle/bills/$billId'
+    | '/settle/bills'
   id:
     | '__root__'
     | '/'
@@ -88,6 +103,7 @@ export interface FileRouteTypes {
     | '/settle/bills'
     | '/settle/participants'
     | '/settle/'
+    | '/settle/bills/$billId'
     | '/settle/bills/'
   fileRoutesById: FileRoutesById
 }
@@ -140,14 +156,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettleBillsIndexRouteImport
       parentRoute: typeof SettleBillsRoute
     }
+    '/settle/bills/$billId': {
+      id: '/settle/bills/$billId'
+      path: '/$billId'
+      fullPath: '/settle/bills/$billId'
+      preLoaderRoute: typeof SettleBillsBillIdRouteImport
+      parentRoute: typeof SettleBillsRoute
+    }
   }
 }
 
 interface SettleBillsRouteChildren {
+  SettleBillsBillIdRoute: typeof SettleBillsBillIdRoute
   SettleBillsIndexRoute: typeof SettleBillsIndexRoute
 }
 
 const SettleBillsRouteChildren: SettleBillsRouteChildren = {
+  SettleBillsBillIdRoute: SettleBillsBillIdRoute,
   SettleBillsIndexRoute: SettleBillsIndexRoute,
 }
 
