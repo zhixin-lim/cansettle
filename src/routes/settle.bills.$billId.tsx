@@ -328,7 +328,7 @@ function BillPage() {
                     {owners.length === 0
                       ? "Not assigned yet."
                       : owners.length === 1
-                        ? `${owners[0].name} — ${formatCents(total)}`
+                        ? `${owners[0]!.name} — ${formatCents(total)}`
                         : `Shared ${owners.length} ways — about ${formatCents(
                             Math.trunc(total / owners.length),
                           )} each`}

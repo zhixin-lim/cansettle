@@ -121,7 +121,7 @@ function ResultPage() {
           {result.balances.map((b) => {
             const isOpen = open === b.participantId;
             const lines = result.billResults.map((r, i) => ({
-              bill: session.bills[i],
+              bill: session.bills[i]!,
               breakdown: r.breakdowns.find(
                 (x) => x.participantId === b.participantId,
               )!,
