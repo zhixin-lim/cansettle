@@ -14,6 +14,7 @@ import { Route as SettleRouteImport } from './routes/settle'
 import { Route as SettleIndexRouteImport } from './routes/settle.index'
 import { Route as SettleBillsRouteImport } from './routes/settle.bills'
 import { Route as SettleParticipantsRouteImport } from './routes/settle.participants'
+import { Route as SettleResultRouteImport } from './routes/settle.result'
 import { Route as SettleBillsIndexRouteImport } from './routes/settle.bills.index'
 import { Route as SettleBillsBillIdRouteImport } from './routes/settle.bills.$billId'
 
@@ -42,6 +43,11 @@ const SettleParticipantsRoute = SettleParticipantsRouteImport.update({
   path: '/participants',
   getParentRoute: () => SettleRoute,
 } as any)
+const SettleResultRoute = SettleResultRouteImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => SettleRoute,
+} as any)
 const SettleBillsIndexRoute = SettleBillsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/settle': typeof SettleRouteWithChildren
   '/settle/bills': typeof SettleBillsRouteWithChildren
   '/settle/participants': typeof SettleParticipantsRoute
+  '/settle/result': typeof SettleResultRoute
   '/settle/': typeof SettleIndexRoute
   '/settle/bills/$billId': typeof SettleBillsBillIdRoute
   '/settle/bills/': typeof SettleBillsIndexRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settle/participants': typeof SettleParticipantsRoute
+  '/settle/result': typeof SettleResultRoute
   '/settle': typeof SettleIndexRoute
   '/settle/bills/$billId': typeof SettleBillsBillIdRoute
   '/settle/bills': typeof SettleBillsIndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/settle': typeof SettleRouteWithChildren
   '/settle/bills': typeof SettleBillsRouteWithChildren
   '/settle/participants': typeof SettleParticipantsRoute
+  '/settle/result': typeof SettleResultRoute
   '/settle/': typeof SettleIndexRoute
   '/settle/bills/$billId': typeof SettleBillsBillIdRoute
   '/settle/bills/': typeof SettleBillsIndexRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/settle'
     | '/settle/bills'
     | '/settle/participants'
+    | '/settle/result'
     | '/settle/'
     | '/settle/bills/$billId'
     | '/settle/bills/'
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/settle/participants'
+    | '/settle/result'
     | '/settle'
     | '/settle/bills/$billId'
     | '/settle/bills'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/settle'
     | '/settle/bills'
     | '/settle/participants'
+    | '/settle/result'
     | '/settle/'
     | '/settle/bills/$billId'
     | '/settle/bills/'
@@ -149,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettleParticipantsRouteImport
       parentRoute: typeof SettleRoute
     }
+    '/settle/result': {
+      id: '/settle/result'
+      path: '/result'
+      fullPath: '/settle/result'
+      preLoaderRoute: typeof SettleResultRouteImport
+      parentRoute: typeof SettleRoute
+    }
     '/settle/bills/': {
       id: '/settle/bills/'
       path: '/'
@@ -183,12 +202,14 @@ const SettleBillsRouteWithChildren = SettleBillsRoute._addFileChildren(
 interface SettleRouteChildren {
   SettleBillsRoute: typeof SettleBillsRouteWithChildren
   SettleParticipantsRoute: typeof SettleParticipantsRoute
+  SettleResultRoute: typeof SettleResultRoute
   SettleIndexRoute: typeof SettleIndexRoute
 }
 
 const SettleRouteChildren: SettleRouteChildren = {
   SettleBillsRoute: SettleBillsRouteWithChildren,
   SettleParticipantsRoute: SettleParticipantsRoute,
+  SettleResultRoute: SettleResultRoute,
   SettleIndexRoute: SettleIndexRoute,
 }
 

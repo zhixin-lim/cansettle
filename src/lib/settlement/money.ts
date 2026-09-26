@@ -38,7 +38,7 @@ export function splitEvenly(amount: number, count: number): number[] {
   const parts = new Array<number>(count).fill(base);
   let i = 0;
   while (remainder !== 0) {
-    parts[i] += step;
+    parts[i] = (parts[i] ?? 0) + step;
     remainder -= step;
     i = (i + 1) % count;
   }

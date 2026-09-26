@@ -78,7 +78,7 @@ function BillsPage() {
       </Paper>
 
       {session.bills.map((bill, i) => {
-        const r = result.billResults[i];
+        const r = result.billResults[i]!;
         const noPayer = bill.payerId === null;
         const unassigned = r.unassignedItems.length;
         const ok = r.reconciles && unassigned === 0 && !noPayer;

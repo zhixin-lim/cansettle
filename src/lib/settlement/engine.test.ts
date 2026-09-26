@@ -1,0 +1,196 @@
+import { describe, expect, it } from "vitest";
+
+import { calculateBill, calculateSession, simplifyTransfers } from "./engine";
+import { parseDollarsToCents, splitEvenly } from "./money";
+import type { Bill, Participant, Session } from "./types";
+
+const people: Participant[] = [
+  { id: "r", name: "Rachel", order: 0 },
+  { id: "h", name: "Hannah", order: 1 },
+  { id: "c", name: "Cherie", order: 2 },
+  { id: "m", name: "Me", order: 3 },
+];
+
+function bill(partial: Partial<Bill>): Bill {
+  return {
+    id: "b1",
+    merchant: "Test",
+    payerId: "r",
+    items: [],
+    serviceChargeCents: 0,
+    gstCents: 0,
+    totalCents: 0,
+    ...partial,
+  };
+}
+
+describe("money", () => {
+  it("parses dollars into integer cents", () => {
+    expect(parseDollarsToCents("17.90")).toBe(1790);
+    expect(parseDollarsToCents("$19.5")).toBe(1950);
+    expect(parseDollarsToCents("10")).toBe(1000);
+    expect(parseDollarsToCents("")).toBe(0);
+  });
+
+  it("splits remainder cents to the earliest parts", () => {
+    expect(splitEvenly(1000, 3)).toEqual([334, 333, 333]);
+    expect(splitEvenly(1200, 3)).toEqual([400, 400, 400]);
+  });
+});
+
+describe("shared item rounding", () => {
+  it("gives the residual cent to the earliest participant in creation order", () => {
+    const r = calculateBill(
+      bill({
+        items: [
+          {
+            id: "i1",
+            name: "Cheesecake",
+            qty: 1,
+            unitPriceCents: 1000,
+            ownerIds: ["c", "h", "r"], // deliberately out of order
+          },
+        ],
+        totalCents: 1000,
+      }),
+      people,
+    );
+    const by = (id: string) => r.breakdowns.find((b) => b.participantId === id)!;
+    expect(by("r").subtotalCents).toBe(334);
+    expect(by("h").subtotalCents).toBe(333);
+    expect(by("c").subtotalCents).toBe(333);
+    expect(by("m").subtotalCents).toBe(0);
+    expect(r.reconciles).toBe(true);
+  });
+});
+
+describe("service charge and GST", () => {
+  const dinner = bill({
+    items: [
+      { id: "i1", name: "Udon", qty: 1, unitPriceCents: 1790, ownerIds: ["r"] },
+      { id: "i2", name: "Tomato Udon", qty: 1, unitPriceCents: 1950, ownerIds: ["h"] },
+      { id: "i3", name: "Fries", qty: 1, unitPriceCents: 1000, ownerIds: ["r", "h"] },
+    ],
+    serviceChargeCents: 474,
+    gstCents: 428,
+    totalCents: 1790 + 1950 + 1000 + 474 + 428,
+  });
+
+  it("allocates proportionally and reconciles exactly", () => {
+    const r = calculateBill(dinner, people);
+    expect(r.reconciles).toBe(true);
+    const sum = r.breakdowns.reduce((s, b) => s + b.totalCents, 0);
+    expect(sum).toBe(r.billTotalCents);
+  });
+
+  it("never invents a charge that was not entered", () => {
+    const r = calculateBill(
+      bill({
+        items: [
+          { id: "i1", name: "Ice cream", qty: 2, unitPriceCents: 700, ownerIds: ["m"] },
+        ],
+        totalCents: 1400,
+      }),
+      people,
+    );
+    const me = r.breakdowns.find((b) => b.participantId === "m")!;
+    expect(me.serviceChargeCents).toBe(0);
+    expect(me.gstCents).toBe(0);
+    expect(me.totalCents).toBe(1400);
+  });
+
+  it("flags a bill that does not tally instead of adjusting it", () => {
+    const r = calculateBill(
+      bill({
+        items: [
+          { id: "i1", name: "Thing", qty: 1, unitPriceCents: 11850, ownerIds: ["r"] },
+        ],
+        totalCents: 11950,
+      }),
+      people,
+    );
+    expect(r.reconciles).toBe(false);
+    expect(r.differenceCents).toBe(-100);
+  });
+
+  it("reports unassigned items", () => {
+    const r = calculateBill(
+      bill({
+        items: [{ id: "i1", name: "Fries", qty: 1, unitPriceCents: 1000, ownerIds: [] }],
+        totalCents: 1000,
+      }),
+      people,
+    );
+    expect(r.unassignedItems).toEqual([{ itemId: "i1", itemName: "Fries" }]);
+  });
+});
+
+describe("session netting", () => {
+  const session: Session = {
+    participants: people,
+    bills: [
+      bill({
+        id: "b1",
+        merchant: "Dinner",
+        payerId: "r",
+        items: [
+          { id: "i1", name: "Mains", qty: 1, unitPriceCents: 9000, ownerIds: ["r", "h", "c", "m"] },
+        ],
+        serviceChargeCents: 900,
+        gstCents: 810,
+        totalCents: 10710,
+      }),
+      bill({
+        id: "b2",
+        merchant: "Dessert",
+        payerId: "m",
+        items: [
+          { id: "i2", name: "Ice cream", qty: 4, unitPriceCents: 700, ownerIds: ["r", "h", "c", "m"] },
+        ],
+        totalCents: 2800,
+      }),
+    ],
+  };
+
+  it("nets globally across bills and balances to zero", () => {
+    const res = calculateSession(session);
+    expect(res.ready).toBe(true);
+    const net = res.balances.reduce((s, b) => s + b.netCents, 0);
+    expect(net).toBe(0);
+    const moved = res.transfers.reduce((s, t) => s + t.amountCents, 0);
+    const owed = res.balances
+      .filter((b) => b.netCents < 0)
+      .reduce((s, b) => s - b.netCents, 0);
+    expect(moved).toBe(owed);
+  });
+
+  it("is deterministic for the same input", () => {
+    const a = JSON.stringify(calculateSession(session).transfers);
+    const b = JSON.stringify(calculateSession(session).transfers);
+    expect(a).toBe(b);
+  });
+
+  it("blocks the settlement when a bill has no payer", () => {
+    const res = calculateSession({
+      ...session,
+      bills: [{ ...session.bills[0], payerId: null }, session.bills[1]],
+    });
+    expect(res.ready).toBe(false);
+    expect(res.transfers).toEqual([]);
+  });
+
+  it("matches the worked example: Hannah and Me pay Rachel", () => {
+    const transfers = simplifyTransfers(
+      [
+        { participantId: "r", paidCents: 12000, shareCents: 6000, netCents: 6000 },
+        { participantId: "h", paidCents: 0, shareCents: 4500, netCents: -4500 },
+        { participantId: "m", paidCents: 0, shareCents: 1500, netCents: -1500 },
+      ],
+      ["r", "h", "m"],
+    );
+    expect(transfers).toEqual([
+      { fromId: "h", toId: "r", amountCents: 4500 },
+      { fromId: "m", toId: "r", amountCents: 1500 },
+    ]);
+  });
+});

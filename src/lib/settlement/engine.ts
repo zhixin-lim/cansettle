@@ -121,16 +121,16 @@ export function calculateBill(bill: Bill, participants: Participant[]): BillResu
   const gst = allocateProRata(bill.gstCents, order, subtotals);
 
   const breakdowns: ParticipantBillBreakdown[] = ordered.map((p) => {
-    const subtotal = subtotals[p.id];
-    const sc = service.allocation[p.id];
-    const g = gst.allocation[p.id];
+    const subtotal = subtotals[p.id] ?? 0;
+    const sc = service.allocation[p.id] ?? 0;
+    const g = gst.allocation[p.id] ?? 0;
     return {
       participantId: p.id,
-      items: lines[p.id],
+      items: lines[p.id] ?? [],
       subtotalCents: subtotal,
       serviceChargeCents: sc,
       gstCents: g,
-      roundingCents: service.residual[p.id] + gst.residual[p.id],
+      roundingCents: (service.residual[p.id] ?? 0) + (gst.residual[p.id] ?? 0),
       totalCents: subtotal + sc + g,
     };
   });
@@ -181,8 +181,8 @@ export function simplifyTransfers(
     creditors.sort((a, b) => b.amount - a.amount || byRank(a, b));
     debtors.sort((a, b) => b.amount - a.amount || byRank(a, b));
 
-    const creditor = creditors[0];
-    const debtor = debtors[0];
+    const creditor = creditors[0]!;
+    const debtor = debtors[0]!;
     const amount = Math.min(creditor.amount, debtor.amount);
 
     if (amount > 0) {
@@ -212,19 +212,20 @@ export function calculateSession(session: Session): SessionResult {
   }
 
   session.bills.forEach((bill, i) => {
-    if (bill.payerId && paid[bill.payerId] !== undefined) {
-      paid[bill.payerId] += bill.totalCents;
+    const payerId = bill.payerId;
+    if (payerId && paid[payerId] !== undefined) {
+      paid[payerId] = (paid[payerId] ?? 0) + bill.totalCents;
     }
-    for (const b of billResults[i].breakdowns) {
-      share[b.participantId] += b.totalCents;
+    for (const b of billResults[i]?.breakdowns ?? []) {
+      share[b.participantId] = (share[b.participantId] ?? 0) + b.totalCents;
     }
   });
 
   const balances: NetBalance[] = ordered.map((p) => ({
     participantId: p.id,
-    paidCents: paid[p.id],
-    shareCents: share[p.id],
-    netCents: paid[p.id] - share[p.id],
+    paidCents: paid[p.id] ?? 0,
+    shareCents: share[p.id] ?? 0,
+    netCents: (paid[p.id] ?? 0) - (share[p.id] ?? 0),
   }));
 
   const ready =

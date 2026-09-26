@@ -14,7 +14,12 @@ import {
 } from "@/components/receipt";
 import { cn } from "@/lib/utils";
 import { makeItem, useSession } from "@/lib/session-store";
-import { calculateBill, formatCents, lineTotalCents } from "@/lib/settlement";
+import {
+  calculateBill,
+  formatCents,
+  lineTotalCents,
+  type Bill,
+} from "@/lib/settlement";
 
 export const Route = createFileRoute("/settle/bills/$billId")({
   head: () => ({
@@ -67,7 +72,7 @@ function BillPage() {
     );
   }
 
-  const update = (patch: Parameters<typeof dispatch>[0] extends never ? never : object) =>
+  const update = (patch: Partial<Omit<Bill, "id" | "items">>) =>
     dispatch({ type: "updateBill", id: bill.id, patch });
 
   const allAssigned = result.unassignedItems.length === 0;
@@ -323,7 +328,7 @@ function BillPage() {
                     {owners.length === 0
                       ? "Not assigned yet."
                       : owners.length === 1
-                        ? `${owners[0].name} — ${formatCents(total)}`
+                        ? `${owners[0]!.name} — ${formatCents(total)}`
                         : `Shared ${owners.length} ways — about ${formatCents(
                             Math.trunc(total / owners.length),
                           )} each`}
