@@ -67,7 +67,7 @@ function BillPage() {
     );
   }
 
-  const update = (patch: Parameters<typeof dispatch>[0] extends never ? never : object) =>
+  const update = (patch: Partial<Omit<Bill, "id" | "items">>) =>
     dispatch({ type: "updateBill", id: bill.id, patch });
 
   const allAssigned = result.unassignedItems.length === 0;
