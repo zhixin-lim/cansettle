@@ -14,7 +14,12 @@ import {
 } from "@/components/receipt";
 import { cn } from "@/lib/utils";
 import { makeItem, useSession } from "@/lib/session-store";
-import { calculateBill, formatCents, lineTotalCents } from "@/lib/settlement";
+import {
+  calculateBill,
+  formatCents,
+  lineTotalCents,
+  type Bill,
+} from "@/lib/settlement";
 
 export const Route = createFileRoute("/settle/bills/$billId")({
   head: () => ({
