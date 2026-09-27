@@ -52,7 +52,7 @@ function ParticipantsPage() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 40))}
-          placeholder="Name (e.g. Rachel, or you)"
+          placeholder="Your name, then everyone else"
           aria-label="Participant name"
           className="min-w-0 flex-1 rounded-sm border border-input bg-transparent px-3 py-2 text-sm outline-hidden focus:border-rule focus:ring-1 focus:ring-rule"
         />

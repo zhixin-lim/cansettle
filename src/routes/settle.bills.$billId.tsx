@@ -94,7 +94,7 @@ function BillPage() {
         <input
           value={bill.merchant}
           onChange={(e) => update({ merchant: e.target.value.slice(0, 60) })}
-          placeholder="e.g. OTTER & PEBBLES"
+          placeholder="Name on the receipt"
           className="mt-1 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm outline-hidden focus:border-rule focus:ring-1 focus:ring-rule"
         />
 
