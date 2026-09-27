@@ -49,7 +49,7 @@ export function allocateProRata(
     // fall back to an even, deterministic split.
     const parts = splitEvenly(amount, order.length);
     order.forEach((id, i) => {
-      allocation[id] = parts[i];
+      allocation[id] = parts[i] ?? 0;
     });
     return { allocation, residual };
   }
@@ -64,12 +64,12 @@ export function allocateProRata(
   const leftover = amount - assigned;
   if (leftover !== 0) {
     // Largest pre-tax share absorbs the residual; creation order breaks ties.
-    let winner = order[0];
+    let winner = order[0]!;
     for (const id of order) {
       if ((weights[id] ?? 0) > (weights[winner] ?? 0)) winner = id;
     }
-    allocation[winner] += leftover;
-    residual[winner] += leftover;
+    allocation[winner] = (allocation[winner] ?? 0) + leftover;
+    residual[winner] = (residual[winner] ?? 0) + leftover;
   }
 
   return { allocation, residual };
@@ -106,14 +106,14 @@ export function calculateBill(bill: Bill, participants: Participant[]): BillResu
 
     const parts = splitEvenly(total, owners.length);
     owners.forEach((id, i) => {
-      lines[id].push({
+      lines[id]!.push({
         itemId: item.id,
         itemName: item.name,
         lineTotalCents: total,
         sharedWays: owners.length,
-        shareCents: parts[i],
+        shareCents: parts[i] ?? 0,
       });
-      subtotals[id] += parts[i];
+      subtotals[id] = (subtotals[id] ?? 0) + (parts[i] ?? 0);
     });
   }
 

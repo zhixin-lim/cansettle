@@ -7,7 +7,7 @@ export function formatSummary(session: Session, result: SessionResult): string {
     session.participants.find((p) => p.id === id)?.name ?? "Someone";
 
   const lines: string[] = [];
-  lines.push("🧾 Settlement");
+  lines.push("Settlement");
   lines.push("");
 
   for (const bill of session.bills) {
