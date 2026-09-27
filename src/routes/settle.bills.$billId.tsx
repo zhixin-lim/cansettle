@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MoneyInput } from "@/components/money-input";
 import {
@@ -20,6 +20,68 @@ import {
   lineTotalCents,
   type Bill,
 } from "@/lib/settlement";
+
+/**
+ * Qty field that behaves while typing: the local text is free while editing
+ * (so "1" can become "31" become "3"), and only valid values are committed.
+ * On blur, empty or invalid input snaps back to the last committed quantity.
+ */
+function QtyInput({
+  value,
+  onCommit,
+  className,
+}: {
+  value: number;
+  onCommit: (qty: number) => void;
+  className?: string;
+}) {
+  const [text, setText] = useState(String(value));
+  const focused = useRef(false);
+
+  // Follow outside changes (undo, new item) unless the user is mid-edit.
+  useEffect(() => {
+    if (!focused.current) setText(String(value));
+  }, [value]);
+
+  const commit = () => {
+    focused.current = false;
+    const parsed = Number.parseInt(text, 10);
+    if (Number.isFinite(parsed)) {
+      const qty = Math.max(1, Math.min(99, parsed));
+      onCommit(qty);
+      setText(String(qty));
+    } else {
+      setText(String(value));
+    }
+  };
+
+  return (
+    <input
+      value={text}
+      inputMode="numeric"
+      aria-label="Quantity"
+      onFocus={(e) => {
+        focused.current = true;
+        e.currentTarget.select();
+      }}
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, "").slice(0, 2);
+        setText(digits);
+        const parsed = Number.parseInt(digits, 10);
+        if (Number.isFinite(parsed) && parsed >= 1) {
+          onCommit(Math.min(99, parsed));
+        }
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+      }}
+      className={className}
+    />
+  );
+}
 
 export const Route = createFileRoute("/settle/bills/$billId")({
   head: () => ({
