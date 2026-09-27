@@ -173,7 +173,7 @@ describe("session netting", () => {
   it("blocks the settlement when a bill has no payer", () => {
     const res = calculateSession({
       ...session,
-      bills: [{ ...session.bills[0], payerId: null }, session.bills[1]],
+      bills: [{ ...session.bills[0]!, payerId: null }, session.bills[1]!],
     });
     expect(res.ready).toBe(false);
     expect(res.transfers).toEqual([]);
