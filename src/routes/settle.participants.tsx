@@ -28,9 +28,14 @@ function ParticipantsPage() {
   const { session, dispatch, hydrated } = useSession();
   const [name, setName] = useState("");
 
+  const trimmed = name.trim();
+  const duplicate = session.participants.some(
+    (p) => p.name.trim().toLowerCase() === trimmed.toLowerCase(),
+  );
+
   const add = () => {
-    if (!name.trim()) return;
-    dispatch({ type: "addParticipant", name });
+    if (!trimmed || duplicate) return;
+    dispatch({ type: "addParticipant", name: trimmed });
     setName("");
   };
 
@@ -52,18 +57,25 @@ function ParticipantsPage() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 40))}
-          placeholder="Your name, then everyone else"
+          placeholder="One name at a time"
           aria-label="Participant name"
           className="min-w-0 flex-1 rounded-sm border border-input bg-transparent px-3 py-2 text-sm outline-hidden focus:border-rule focus:ring-1 focus:ring-rule"
         />
         <button
           type="submit"
           className="shrink-0 rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"
-          disabled={!name.trim()}
+          disabled={!trimmed || duplicate}
         >
           Add
         </button>
       </form>
+
+      {duplicate ? (
+        <p className="mt-2 text-xs text-stamp">
+          That name is already in the list — add a short form or initial to tell
+          them apart.
+        </p>
+      ) : null}
 
       <DashedRule />
 
