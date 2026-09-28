@@ -11,6 +11,8 @@ export type Participant = {
   name: string;
   /** Deterministic tie-breaker: order the participant was added. */
   order: number;
+  /** Optional PayNow number, only used in the copyable message. */
+  phone?: string;
 };
 
 export type BillItem = {

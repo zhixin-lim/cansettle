@@ -46,6 +46,7 @@ type Action =
   | { type: "reset" }
   | { type: "addParticipant"; name: string }
   | { type: "renameParticipant"; id: string; name: string }
+  | { type: "setParticipantPhone"; id: string; phone: string }
   | { type: "removeParticipant"; id: string }
   | { type: "addBill"; bill: Bill }
   | { type: "updateBill"; id: string; patch: Partial<Omit<Bill, "id" | "items">> }
@@ -92,6 +93,16 @@ export function sessionReducer(session: Session, action: Action): Session {
       };
       return { ...session, participants: [...session.participants, participant] };
     }
+
+    case "setParticipantPhone":
+      return {
+        ...session,
+        participants: session.participants.map((p) =>
+          p.id === action.id
+            ? { ...p, phone: action.phone.replace(/[^\d+ ]/g, "").slice(0, 16) }
+            : p,
+        ),
+      };
 
     case "renameParticipant":
       return {
