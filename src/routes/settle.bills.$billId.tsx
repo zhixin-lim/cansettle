@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Plus, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MoneyInput } from "@/components/money-input";
 import {
@@ -194,18 +194,14 @@ function BillPage() {
           <ul className="space-y-2">
             {bill.items.map((item) => (
               <li key={item.id} className="grid grid-cols-[3rem_minmax(0,1fr)] gap-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_7rem]">
-                <input
+                <QtyInput
                   value={item.qty}
-                  inputMode="numeric"
-                  aria-label="Quantity"
-                  onChange={(e) =>
+                  onCommit={(qty) =>
                     dispatch({
                       type: "updateItem",
                       billId: bill.id,
                       itemId: item.id,
-                      patch: {
-                        qty: Math.max(1, Math.min(99, Number(e.target.value) || 1)),
-                      },
+                      patch: { qty },
                     })
                   }
                   className="tabular rounded-sm border border-input bg-transparent px-2 py-1.5 text-center text-sm outline-hidden focus:border-rule"
