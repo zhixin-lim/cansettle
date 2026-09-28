@@ -85,6 +85,11 @@ function ParticipantsPage() {
           the split.
         </p>
       ) : (
+        <>
+        <p className="mb-2 text-xs text-ink-soft">
+          Add a PayNow number for anyone who might be paid back — it goes into the
+          message you copy at the end. Optional, and it stays on this device.
+        </p>
         <ul className="divide-y divide-dashed divide-paper-line">
           {session.participants.map((p, i) => (
             <li key={p.id} className="flex items-center gap-3 py-2">
@@ -103,6 +108,17 @@ function ParticipantsPage() {
                 aria-label={`Name of participant ${i + 1}`}
                 className="min-w-0 flex-1 bg-transparent text-sm outline-hidden"
               />
+              <input
+                value={p.phone ?? ""}
+                onChange={(e) =>
+                  dispatch({ type: "setParticipantPhone", id: p.id, phone: e.target.value })
+                }
+                inputMode="tel"
+                placeholder="PayNow no. (optional)"
+                aria-label={`PayNow number for ${p.name} (optional)`}
+                className="tabular w-40 shrink-0 rounded-sm border border-input bg-transparent px-2 py-1 text-xs outline-hidden focus:border-rule"
+              />
+
               <button
                 onClick={() => dispatch({ type: "removeParticipant", id: p.id })}
                 aria-label={`Remove ${p.name}`}

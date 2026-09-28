@@ -43,7 +43,6 @@ export function formatSummary(session: Session, result: SessionResult): string {
       if (bd.serviceChargeCents)
         lines.push(`  - Service charge: ${formatCents(bd.serviceChargeCents)}`);
       if (bd.gstCents) lines.push(`  - GST: ${formatCents(bd.gstCents)}`);
-      if (bd.roundingCents) lines.push(`  - Rounding: ${formatCents(bd.roundingCents)}`);
     }
   }
 
