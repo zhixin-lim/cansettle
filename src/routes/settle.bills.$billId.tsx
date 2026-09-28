@@ -183,7 +183,7 @@ function BillPage() {
 
         <Perforation />
 
-        <ColumnHeads cols={["Qty · Item", "Amount"]} />
+        <ColumnHeads cols={["Qty · Item", "Price each"]} />
         <DashedRule className="my-2" />
 
         {bill.items.length === 0 ? (
@@ -223,7 +223,7 @@ function BillPage() {
                 <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
                   <MoneyInput
                     className="flex-1"
-                    aria-label="Unit price"
+                    aria-label="Price per item"
                     valueCents={item.unitPriceCents}
                     onChangeCents={(cents) =>
                       dispatch({
