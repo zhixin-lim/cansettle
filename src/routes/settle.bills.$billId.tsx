@@ -140,6 +140,24 @@ function BillPage() {
   const allAssigned = result.unassignedItems.length === 0;
   const hasPayer = bill.payerId !== null;
 
+  const missing: string[] = [];
+  if (bill.items.length === 0) missing.push("At least one item from the receipt");
+  bill.items.forEach((it, i) => {
+    const label = it.name.trim() || `Item ${i + 1}`;
+    if (!it.name.trim()) missing.push(`Item ${i + 1}: name`);
+    if (it.unitPriceCents <= 0) missing.push(`${label}: price each`);
+  });
+  if (bill.totalCents <= 0) missing.push("Total on the bill");
+  if (!allAssigned)
+    missing.push(
+      `Who had: ${result.unassignedItems.map((u) => u.itemName.trim() || "unnamed item").join(", ")}`,
+    );
+  if (bill.totalCents > 0 && bill.items.length > 0 && !result.reconciles)
+    missing.push(
+      `Numbers don't tally — off by ${formatCents(Math.abs(result.differenceCents))}`,
+    );
+  if (!hasPayer) missing.push("Who paid this bill");
+
   return (
     <div className="space-y-5">
       {/* ------------------------------------------------ bill entry */}
@@ -159,27 +177,6 @@ function BillPage() {
           placeholder="Name on the receipt"
           className="mt-1 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm outline-hidden focus:border-rule focus:ring-1 focus:ring-rule"
         />
-
-        <label className="mt-4 block text-xs uppercase tracking-[0.16em] text-ink-soft">
-          Who paid this bill?
-        </label>
-        <p className="text-xs text-ink-soft">Choose the person who actually paid.</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {session.participants.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => update({ payerId: bill.payerId === p.id ? null : p.id })}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                bill.payerId === p.id
-                  ? "border-rule bg-rule text-paper"
-                  : "border-input text-ink hover:border-rule",
-              )}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
 
         <Perforation />
 
@@ -418,6 +415,30 @@ function BillPage() {
         ) : null}
       </Paper>
 
+      {/* ------------------------------------------------ payer */}
+      <Paper>
+        <PaperTitle subtitle="Choose the person who actually paid.">
+          Who paid this bill?
+        </PaperTitle>
+        <DashedRule className="mt-6" />
+        <div className="flex flex-wrap gap-2">
+          {session.participants.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => update({ payerId: bill.payerId === p.id ? null : p.id })}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                bill.payerId === p.id
+                  ? "border-rule bg-rule text-paper"
+                  : "border-input text-ink hover:border-rule",
+              )}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </Paper>
+
       {/* ------------------------------------------------ per person */}
       {allAssigned && result.reconciles && bill.items.length > 0 ? (
         <Paper>
@@ -444,6 +465,17 @@ function BillPage() {
         </Paper>
       ) : null}
 
+      {missing.length > 0 ? (
+        <div className="rounded-sm border border-stamp/40 bg-paper p-3">
+          <p className="font-display text-base text-stamp">Not done yet — still missing:</p>
+          <ul className="mt-1 list-disc pl-5 text-sm text-ink">
+            {missing.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         <Link
           to="/settle/bills"
@@ -453,7 +485,7 @@ function BillPage() {
         </Link>
         <button
           onClick={() => navigate({ to: "/settle/bills" })}
-          disabled={!hasPayer || !allAssigned || !result.reconciles}
+          disabled={missing.length > 0}
           className="flex-1 rounded-sm bg-primary px-4 py-3 font-display text-lg text-primary-foreground disabled:opacity-40"
         >
           Done with this bill

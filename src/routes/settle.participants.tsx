@@ -129,6 +129,7 @@ function ParticipantsPage() {
             </li>
           ))}
         </ul>
+        </>
       )}
 
       <DashedRule />
