@@ -64,7 +64,8 @@ export function allocateProRata(
   const leftover = amount - assigned;
   if (leftover !== 0) {
     // Largest pre-tax share absorbs the residual; creation order breaks ties.
-    let winner = order[0]!;
+      let winner = order[0];
+      if (winner === undefined) return { allocation, residual };
     for (const id of order) {
       if ((weights[id] ?? 0) > (weights[winner] ?? 0)) winner = id;
     }
