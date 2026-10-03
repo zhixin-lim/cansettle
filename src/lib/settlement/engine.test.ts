@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { calculateBill, calculateSession, simplifyTransfers } from "./engine";
 import { parseDollarsToCents, splitEvenly } from "./money";
+import { formatSummary } from "./summary";
 import type { Bill, Participant, Session } from "./types";
 
 const people: Participant[] = [
@@ -192,5 +193,51 @@ describe("session netting", () => {
       { fromId: "h", toId: "r", amountCents: 4500 },
       { fromId: "m", toId: "r", amountCents: 1500 },
     ]);
+  });
+});
+
+describe("quantity assignments", () => {
+  const plates = bill({
+    items: [
+      { id: "red", name: "Red plate", qty: 3, unitPriceCents: 300,
+        ownerIds: [], ownerQuantities: { r: 1, h: 2 } },
+      { id: "gold", name: "Gold plate", qty: 4, unitPriceCents: 500,
+        ownerIds: [], ownerQuantities: { r: 2, h: 2 } },
+    ],
+    serviceChargeCents: 290, gstCents: 261, totalCents: 3451,
+  });
+
+  it("charges each person for their own plates and reconciles taxes", () => {
+    const result = calculateBill(plates, people);
+    expect(result.unassignedItems).toEqual([]);
+    expect(result.breakdowns.find((b) => b.participantId === "r")?.subtotalCents).toBe(1300);
+    expect(result.breakdowns.find((b) => b.participantId === "h")?.subtotalCents).toBe(1600);
+    expect(result.breakdowns.reduce((sum, b) => sum + b.totalCents, 0)).toBe(3451);
+    const session = { participants: people, bills: [plates] };
+    const calculated = calculateSession(session);
+    expect(calculated.ready).toBe(true);
+    const summary = formatSummary(session, calculated);
+    expect(summary).toContain("1x Red plate: $3.00");
+    expect(summary).toContain("2x Red plate: $6.00");
+    expect(summary).toContain("2x Gold plate: $10.00");
+    expect(summary).toContain("React 🫡 once settled.");
+    expect(summary).not.toContain("Can settle already");
+  });
+
+  it.each([
+    [{ r: 1, h: 1 }, "1 still to assign"],
+    [{ r: 2, h: 2 }, "1 too many assigned"],
+    [{ r: 1.5, h: 1.5 }, "Invalid quantity assignment"],
+    [{ r: 1, missing: 2 }, "Invalid quantity assignment"],
+    [{ r: -1, h: 4 }, "Invalid quantity assignment"],
+  ])("blocks invalid assignments without silently sharing", (quantities, reason) => {
+    const first = plates.items[0];
+    if (!first) throw new Error("Missing test plate");
+    const invalid = { ...plates, items: [{ ...first, ownerQuantities: quantities }] };
+    const result = calculateSession({ participants: people, bills: [invalid] });
+    expect(result.ready).toBe(false);
+    expect(result.transfers).toEqual([]);
+    expect(result.billResults[0]?.unassignedItems[0]?.reason).toBe(reason);
+    expect(result.billResults[0]?.breakdowns.every((b) => b.items.length === 0)).toBe(true);
   });
 });
