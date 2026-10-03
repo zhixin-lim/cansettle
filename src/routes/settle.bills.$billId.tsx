@@ -91,6 +91,8 @@ function QtyInput({
 export const Route = createFileRoute("/settle/bills/$billId")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Bill details — Settle This Makan" },
       {
         name: "description",
@@ -348,7 +350,7 @@ function BillPage() {
                       <Button key={String(quantityMode)} size="sm" variant="outline"
                         aria-pressed={byQuantity === quantityMode}
                         className={cn("rounded-sm", byQuantity === quantityMode && "border-rule bg-rule text-paper")}
-                        onClick={() => dispatch({ type: "updateItem", billId: bill.id,
+                        onClick={() => byQuantity !== quantityMode && dispatch({ type: "updateItem", billId: bill.id,
                           itemId: item.id, patch: {
                             ownerQuantities: quantityMode ? {} : undefined,
                             ownerIds: quantityMode ? [] : session.participants.filter(
