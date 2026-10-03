@@ -6,6 +6,8 @@ import { useSession } from "@/lib/session-store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Settle This Makan — split the bill, no drama" },
       {
         name: "description",

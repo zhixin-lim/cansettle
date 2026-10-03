@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Bill items use optional ownerQuantities for whole-item allocation; absence preserves equal sharing and existing saved sessions.
+- Quantity assignments must exactly match receipt quantity before settlement; missing or excess units must never be redistributed silently.

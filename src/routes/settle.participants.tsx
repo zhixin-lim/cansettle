@@ -8,6 +8,8 @@ import { useSession } from "@/lib/session-store";
 export const Route = createFileRoute("/settle/participants")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Who's splitting this? — Settle This Makan" },
       {
         name: "description",

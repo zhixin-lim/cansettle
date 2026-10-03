@@ -3,6 +3,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MoneyInput } from "@/components/money-input";
+import { Button } from "@/components/ui/button";
 import {
   Amount,
   ColumnHeads,
@@ -30,10 +31,14 @@ function QtyInput({
   value,
   onCommit,
   className,
+  min = 1,
+  label = "Quantity",
 }: {
   value: number;
   onCommit: (qty: number) => void;
   className?: string;
+  min?: number;
+  label?: string;
 }) {
   const [text, setText] = useState(String(value));
   const focused = useRef(false);
@@ -47,7 +52,7 @@ function QtyInput({
     focused.current = false;
     const parsed = Number.parseInt(text, 10);
     if (Number.isFinite(parsed)) {
-      const qty = Math.max(1, Math.min(99, parsed));
+      const qty = Math.max(min, Math.min(99, parsed));
       onCommit(qty);
       setText(String(qty));
     } else {
@@ -59,7 +64,7 @@ function QtyInput({
     <input
       value={text}
       inputMode="numeric"
-      aria-label="Quantity"
+      aria-label={label}
       onFocus={(e) => {
         focused.current = true;
         e.currentTarget.select();
@@ -68,7 +73,7 @@ function QtyInput({
         const digits = e.target.value.replace(/\D/g, "").slice(0, 2);
         setText(digits);
         const parsed = Number.parseInt(digits, 10);
-        if (Number.isFinite(parsed) && parsed >= 1) {
+        if (Number.isFinite(parsed) && parsed >= min) {
           onCommit(Math.min(99, parsed));
         }
       }}
@@ -86,6 +91,8 @@ function QtyInput({
 export const Route = createFileRoute("/settle/bills/$billId")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Bill details — Settle This Makan" },
       {
         name: "description",
@@ -150,7 +157,7 @@ function BillPage() {
   if (bill.totalCents <= 0) missing.push("Total on the bill");
   if (!allAssigned)
     missing.push(
-      `Who had: ${result.unassignedItems.map((u) => u.itemName.trim() || "unnamed item").join(", ")}`,
+      `Who had: ${result.unassignedItems.map((u) => `${u.itemName.trim() || "unnamed item"}${u.reason ? ` — ${u.reason}` : ""}`).join(", ")}`,
     );
   if (bill.totalCents > 0 && bill.items.length > 0 && !result.reconciles)
     missing.push(
@@ -309,7 +316,7 @@ function BillPage() {
 
       {/* ------------------------------------------------ ownership */}
       <Paper>
-        <PaperTitle subtitle="Select everyone who should share each item. Shared items split equally.">
+        <PaperTitle>
           Who had what?
         </PaperTitle>
 
@@ -326,15 +333,54 @@ function BillPage() {
                 item.ownerIds.includes(p.id),
               );
               const total = lineTotalCents(item.qty, item.unitPriceCents);
+              const byQuantity = item.ownerQuantities !== undefined;
+              const assigned = session.participants.reduce(
+                (sum, p) => sum + (item.ownerQuantities?.[p.id] ?? 0), 0);
               return (
                 <li key={item.id}>
                   <div className="flex items-baseline">
                     <span className="min-w-0 truncate text-sm font-medium">
-                      {item.name.trim() || "Unnamed item"}
+                      {item.qty} × {item.name.trim() || "Unnamed item"}
                     </span>
                     <span className="leader" aria-hidden />
                     <Amount cents={total} className="shrink-0 text-sm" />
                   </div>
+                  <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label={`Split method for ${item.name}`}>
+                    {[false, true].map((quantityMode) => (
+                      <Button key={String(quantityMode)} size="sm" variant="outline"
+                        aria-pressed={byQuantity === quantityMode}
+                        className={cn("rounded-sm", byQuantity === quantityMode && "border-rule bg-rule text-paper")}
+                        onClick={() => byQuantity !== quantityMode && dispatch({ type: "updateItem", billId: bill.id,
+                          itemId: item.id, patch: {
+                            ownerQuantities: quantityMode ? {} : undefined,
+                            ownerIds: quantityMode ? [] : session.participants.filter(
+                              (p) => (item.ownerQuantities?.[p.id] ?? 0) > 0).map((p) => p.id),
+                          } })}>
+                        {quantityMode ? "Assign quantities" : "Share equally"}
+                      </Button>
+                    ))}
+                  </div>
+                  {byQuantity ? (
+                    <div className="mt-3 space-y-2">
+                      {session.participants.map((p) => (
+                        <label key={p.id} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="min-w-0 break-words">{p.name}</span>
+                          <QtyInput min={0} value={item.ownerQuantities?.[p.id] ?? 0}
+                            label={`Quantity of ${item.name || "item"} for ${p.name}`}
+                            className="tabular w-16 shrink-0 rounded-sm border border-input bg-transparent px-2 py-1.5 text-center text-sm outline-hidden focus:border-rule"
+                            onCommit={(qty) => dispatch({ type: "updateItem", billId: bill.id,
+                              itemId: item.id, patch: { ownerQuantities: {
+                                ...item.ownerQuantities, [p.id]: qty,
+                              } } })} />
+                        </label>
+                      ))}
+                      <p role="status" className={cn("text-xs", assigned === item.qty ? "text-rule" : "text-stamp")}>
+                        {assigned} of {item.qty} assigned
+                        {assigned < item.qty ? ` — ${item.qty - assigned} still to assign`
+                          : assigned > item.qty ? ` — ${assigned - item.qty} too many assigned` : " ✓"}
+                      </p>
+                    </div>
+                  ) : <>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {session.participants.map((p) => {
                       const on = item.ownerIds.includes(p.id);
@@ -383,11 +429,12 @@ function BillPage() {
                     {owners.length === 0
                       ? "Not assigned yet."
                       : owners.length === 1
-                        ? `${owners[0]!.name} — ${formatCents(total)}`
+                         ? `${owners[0]?.name} — ${formatCents(total)}`
                         : `Shared ${owners.length} ways — about ${formatCents(
                             Math.trunc(total / owners.length),
                           )} each`}
                   </p>
+                  </>}
                 </li>
               );
             })}
@@ -407,9 +454,9 @@ function BillPage() {
             </p>
             <p className="mt-1 text-xs text-ink-soft">
               {result.unassignedItems
-                .map((u) => u.itemName.trim() || "An unnamed item")
+                 .map((u) => `${u.itemName.trim() || "An unnamed item"}${u.reason ? ` — ${u.reason}` : ""}`)
                 .join(", ")}{" "}
-              still needs to be assigned.
+              needs its assignment checked.
             </p>
           </div>
         ) : null}

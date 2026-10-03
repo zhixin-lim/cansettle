@@ -64,7 +64,8 @@ export function allocateProRata(
   const leftover = amount - assigned;
   if (leftover !== 0) {
     // Largest pre-tax share absorbs the residual; creation order breaks ties.
-    let winner = order[0]!;
+      let winner = order[0];
+      if (winner === undefined) return { allocation, residual };
     for (const id of order) {
       if ((weights[id] ?? 0) > (weights[winner] ?? 0)) winner = id;
     }
@@ -82,9 +83,20 @@ export function calculateBill(bill: Bill, participants: Participant[]): BillResu
   const order = ordered.map((p) => p.id);
   const indexOf = new Map(order.map((id, i) => [id, i]));
 
-  const unassignedItems = bill.items
-    .filter((item) => item.ownerIds.filter((id) => indexOf.has(id)).length === 0)
-    .map((item) => ({ itemId: item.id, itemName: item.name }));
+  const unassignedItems = bill.items.flatMap((item) => {
+    if (item.ownerQuantities === undefined) {
+      return item.ownerIds.some((id) => indexOf.has(id))
+        ? [] : [{ itemId: item.id, itemName: item.name }];
+    }
+    const entries = Object.entries(item.ownerQuantities);
+    const invalid = entries.some(([id, qty]) =>
+      !Number.isSafeInteger(qty) || qty < 0 || (qty > 0 && !indexOf.has(id)));
+    const assigned = entries.reduce((sum, [, qty]) => sum + qty, 0);
+    const reason = invalid ? "Invalid quantity assignment"
+      : assigned < item.qty ? `${item.qty - assigned} still to assign`
+      : assigned > item.qty ? `${assigned - item.qty} too many assigned` : null;
+    return reason ? [{ itemId: item.id, itemName: item.name, reason }] : [];
+  });
 
   const lines: Record<string, ItemLine[]> = {};
   const subtotals: Record<string, number> = {};
@@ -101,12 +113,25 @@ export function calculateBill(bill: Bill, participants: Participant[]): BillResu
 
     // Keep owners in participant creation order so the remainder cents of a
     // shared item always land on the same people for the same input.
+    if (item.ownerQuantities !== undefined) {
+      // Incomplete assignments never silently turn into an equal split.
+      if (unassignedItems.some((entry) => entry.itemId === item.id)) continue;
+      for (const id of order) {
+        const qty = item.ownerQuantities[id] ?? 0;
+        if (qty === 0) continue;
+        const shareCents = lineTotalCents(qty, item.unitPriceCents);
+        lines[id]?.push({ itemId: item.id, itemName: item.name,
+          lineTotalCents: total, sharedWays: 1, shareCents, assignedQty: qty });
+        subtotals[id] = (subtotals[id] ?? 0) + shareCents;
+      }
+      continue;
+    }
     const owners = order.filter((id) => item.ownerIds.includes(id));
     if (owners.length === 0) continue;
 
     const parts = splitEvenly(total, owners.length);
     owners.forEach((id, i) => {
-      lines[id]!.push({
+      lines[id]?.push({
         itemId: item.id,
         itemName: item.name,
         lineTotalCents: total,
@@ -181,8 +206,9 @@ export function simplifyTransfers(
     creditors.sort((a, b) => b.amount - a.amount || byRank(a, b));
     debtors.sort((a, b) => b.amount - a.amount || byRank(a, b));
 
-    const creditor = creditors[0]!;
-    const debtor = debtors[0]!;
+    const creditor = creditors[0];
+    const debtor = debtors[0];
+    if (!creditor || !debtor) break;
     const amount = Math.min(creditor.amount, debtor.amount);
 
     if (amount > 0) {

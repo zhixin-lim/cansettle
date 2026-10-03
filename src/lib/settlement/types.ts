@@ -22,6 +22,8 @@ export type BillItem = {
   unitPriceCents: number;
   /** Participants sharing this item equally. Empty = unassigned. */
   ownerIds: string[];
+  /** Present = whole-item quantities per person; absent = equal sharing. */
+  ownerQuantities?: Record<string, number> | undefined;
 };
 
 export type Bill = {
@@ -53,6 +55,8 @@ export type ItemLine = {
   sharedWays: number;
   /** This participant's portion of the line. */
   shareCents: number;
+  /** Whole items consumed when assigned by quantity. */
+  assignedQty?: number;
 };
 
 export type ParticipantBillBreakdown = {
@@ -79,7 +83,7 @@ export type BillResult = {
   reconciles: boolean;
   /** calculated - printed. Positive = we calculated more than the bill says. */
   differenceCents: number;
-  unassignedItems: { itemId: string; itemName: string }[];
+  unassignedItems: { itemId: string; itemName: string; reason?: string }[];
 };
 
 export type NetBalance = {
