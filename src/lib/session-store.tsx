@@ -123,6 +123,9 @@ export function sessionReducer(session: Session, action: Action): Session {
           items: bill.items.map((item) => ({
             ...item,
             ownerIds: item.ownerIds.filter((id) => id !== action.id),
+            ownerQuantities: item.ownerQuantities === undefined ? undefined
+              : Object.fromEntries(Object.entries(item.ownerQuantities)
+                  .filter(([id]) => id !== action.id)),
           })),
         })),
       };

@@ -31,7 +31,8 @@ export function formatSummary(session: Session, result: SessionResult): string {
       if (multiBill) lines.push(`  [${bill.merchant.trim() || "Bill"}]`);
       for (const it of bd.items) {
         const src = bill.items.find((x) => x.id === it.itemId);
-        const qty = src && src.qty > 1 ? `${src.qty}x ` : "";
+        const quantity = it.assignedQty ?? src?.qty ?? 1;
+        const qty = quantity > 1 || it.assignedQty !== undefined ? `${quantity}x ` : "";
         const shared =
           it.sharedWays > 1
             ? ` (shared ${it.sharedWays} ways, ${formatCents(it.lineTotalCents)})`
@@ -61,6 +62,6 @@ export function formatSummary(session: Session, result: SessionResult): string {
   }
 
   lines.push("");
-  lines.push("Can settle already 🫡");
+  lines.push("React 🫡 once settled.");
   return lines.join("\n");
 }
