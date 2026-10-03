@@ -172,6 +172,11 @@ function ResultPage() {
                               label={
                                 <>
                                   {line.itemName.trim() || "Unnamed item"}
+                                  {line.assignedQty !== undefined ? (
+                                    <em className="ml-1 text-xs not-italic text-ink-soft">
+                                      ({line.assignedQty} ×)
+                                    </em>
+                                  ) : null}
                                   {line.sharedWays > 1 ? (
                                     <em className="ml-1 text-xs not-italic text-ink-soft">
                                       (shared {line.sharedWays} ways)
@@ -207,6 +212,7 @@ function ResultPage() {
 
                     <DashedRule />
                     <p className="text-xs leading-relaxed text-ink-soft">
+                      Quantity-assigned items use each person&apos;s quantity × price each.
                       Shared items are divided equally in whole cents, with any leftover
                       cent going to whoever was added first. Service charge and GST are
                       split in proportion to each person&apos;s pre-tax item subtotal,

@@ -23,7 +23,7 @@ export type BillItem = {
   /** Participants sharing this item equally. Empty = unassigned. */
   ownerIds: string[];
   /** Present = whole-item quantities per person; absent = equal sharing. */
-  ownerQuantities?: Record<string, number>;
+  ownerQuantities?: Record<string, number> | undefined;
 };
 
 export type Bill = {
