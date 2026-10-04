@@ -6,7 +6,6 @@
  * user-entered names or amounts are ever logged.
  */
 import {
-  createContext,
   useContext,
   useEffect,
   useMemo,
@@ -16,6 +15,7 @@ import {
 } from "react";
 
 import type { Bill, BillItem, Participant, Session } from "./settlement";
+import { SessionContext, type SessionContextValue } from "./session-context";
 
 const STORAGE_KEY = "settle-makan.session.v1";
 
@@ -41,7 +41,7 @@ export function makeItem(): BillItem {
   return { id: newId("item"), name: "", qty: 1, unitPriceCents: 0, ownerIds: [] };
 }
 
-type Action =
+export type SessionAction =
   | { type: "hydrate"; session: Session }
   | { type: "reset" }
   | { type: "addParticipant"; name: string }
@@ -76,7 +76,7 @@ function mapItem(
   }));
 }
 
-export function sessionReducer(session: Session, action: Action): Session {
+export function sessionReducer(session: Session, action: SessionAction): Session {
   switch (action.type) {
     case "hydrate":
       return action.session;
@@ -175,15 +175,6 @@ export function sessionReducer(session: Session, action: Action): Session {
       return session;
   }
 }
-
-type SessionContextValue = {
-  session: Session;
-  dispatch: (action: Action) => void;
-  /** False until localStorage has been read on the client. */
-  hydrated: boolean;
-};
-
-const SessionContext = createContext<SessionContextValue | null>(null);
 
 function readStored(): Session | null {
   try {

@@ -11,3 +11,4 @@
 
 - Bill items use optional ownerQuantities for whole-item allocation; absence preserves equal sharing and existing saved sessions.
 - Quantity assignments must exactly match receipt quantity before settlement; missing or excess units must never be redistributed silently.
+- Keep SessionContext in a dedicated module separate from the provider and reducer so live updates do not recreate the context while mounted consumers still use the previous identity.
