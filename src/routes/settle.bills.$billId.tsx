@@ -120,6 +120,31 @@ function BillPage() {
     [bill, session.participants],
   );
 
+  // Auto-charge helpers: most Singapore places charge 10% service charge and
+  // 9% GST (GST applies on top of items + service charge, the x1.199 rule).
+  // Toggling one on fills the amount in; the field stays editable, and typing
+  // your own amount switches the auto mode back off.
+  const [autoSC, setAutoSC] = useState(false);
+  const [autoGST, setAutoGST] = useState(false);
+  const itemsSubtotalCents = result?.itemsSubtotalCents ?? 0;
+  const serviceCents = bill?.serviceChargeCents ?? 0;
+
+  useEffect(() => {
+    if (!autoSC || !bill) return;
+    const v = Math.round(itemsSubtotalCents * 0.1);
+    if (v !== bill.serviceChargeCents) {
+      dispatch({ type: "updateBill", id: bill.id, patch: { serviceChargeCents: v } });
+    }
+  }, [autoSC, itemsSubtotalCents, bill, dispatch]);
+
+  useEffect(() => {
+    if (!autoGST || !bill) return;
+    const v = Math.round((itemsSubtotalCents + serviceCents) * 0.09);
+    if (v !== bill.gstCents) {
+      dispatch({ type: "updateBill", id: bill.id, patch: { gstCents: v } });
+    }
+  }, [autoGST, itemsSubtotalCents, serviceCents, bill, dispatch]);
+
   if (!bill || !result) {
     return (
       <Paper>
