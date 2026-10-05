@@ -42,12 +42,16 @@ export function MoneyInput({
         inputMode="decimal"
         value={text}
         placeholder={placeholder}
+        onFocus={() => {
+          focused.current = true;
+        }}
         onChange={(e) => {
           const next = e.target.value.replace(/[^0-9.]/g, "").slice(0, 10);
           setText(next);
           onChangeCents(parseDollarsToCents(next));
         }}
         onBlur={() => {
+          focused.current = false;
           const cents = parseDollarsToCents(text);
           setText(cents === 0 && text.trim() === "" ? "" : centsToDollarString(cents));
         }}
