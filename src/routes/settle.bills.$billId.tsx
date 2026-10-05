@@ -290,18 +290,44 @@ function BillPage() {
         <DashedRule />
 
         <div className="space-y-2">
-          <ChargeRow label="Service charge">
+          <ChargeRow
+            label="Service charge"
+            action={
+              <AutoToggle
+                on={autoSC}
+                label="10%"
+                ariaLabel="Auto-fill 10% service charge"
+                onClick={() => setAutoSC((v) => !v)}
+              />
+            }
+          >
             <MoneyInput
               aria-label="Service charge"
               valueCents={bill.serviceChargeCents}
-              onChangeCents={(cents) => update({ serviceChargeCents: cents })}
+              onChangeCents={(cents) => {
+                setAutoSC(false);
+                update({ serviceChargeCents: cents });
+              }}
             />
           </ChargeRow>
-          <ChargeRow label="GST">
+          <ChargeRow
+            label="GST"
+            action={
+              <AutoToggle
+                on={autoGST}
+                label="9%"
+                ariaLabel="Auto-fill 9% GST"
+                onClick={() => setAutoGST((v) => !v)}
+              />
+            }
+          >
             <MoneyInput
               aria-label="GST"
               valueCents={bill.gstCents}
-              onChangeCents={(cents) => update({ gstCents: cents })}
+              onChangeCents={(cents) => {
+                setAutoGST(false);
+                update({ gstCents: cents });
+              }}
             />
           </ChargeRow>
           <ChargeRow label="Total on the bill">
