@@ -595,15 +595,49 @@ function BillPage() {
 
 function ChargeRow({
   label,
+  action,
   children,
 }: {
   label: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-2">
-      <span className="text-sm text-ink-soft">{label}</span>
+      <span className="flex items-center gap-2 text-sm text-ink-soft">
+        {label}
+        {action}
+      </span>
       {children}
     </div>
+  );
+}
+
+function AutoToggle({
+  on,
+  label,
+  ariaLabel,
+  onClick,
+}: {
+  on: boolean;
+  label: string;
+  ariaLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-2 py-0.5 text-[0.65rem] uppercase tracking-wide transition-colors",
+        on
+          ? "border-rule bg-rule text-paper"
+          : "border-dashed border-paper-line text-ink-soft hover:border-rule",
+      )}
+    >
+      {on ? `${label} ✓` : `auto ${label}`}
+    </button>
   );
 }
