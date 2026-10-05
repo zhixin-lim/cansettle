@@ -194,7 +194,7 @@ function BillPage() {
     <div className="space-y-5">
       {/* ------------------------------------------------ bill entry */}
       <Paper>
-        <PaperTitle subtitle="Type it exactly as printed. We only ever use the service charge and GST you enter.">
+        <PaperTitle subtitle="Type it exactly as printed. Tap auto 10% / 9% to fill in the usual charges, or enter them yourself.">
           The bill
         </PaperTitle>
 
