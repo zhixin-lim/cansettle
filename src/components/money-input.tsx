@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { centsToDollarString, parseDollarsToCents } from "@/lib/settlement";
@@ -23,6 +23,14 @@ export function MoneyInput({
   const [text, setText] = useState(() =>
     valueCents === 0 ? "" : centsToDollarString(valueCents),
   );
+  const focused = useRef(false);
+
+  // Follow outside changes (e.g. the auto 10% / 9% fill) unless mid-edit.
+  useEffect(() => {
+    if (!focused.current) {
+      setText(valueCents === 0 ? "" : centsToDollarString(valueCents));
+    }
+  }, [valueCents]);
 
   return (
     <div className={cn("relative", className)}>
@@ -34,12 +42,16 @@ export function MoneyInput({
         inputMode="decimal"
         value={text}
         placeholder={placeholder}
+        onFocus={() => {
+          focused.current = true;
+        }}
         onChange={(e) => {
           const next = e.target.value.replace(/[^0-9.]/g, "").slice(0, 10);
           setText(next);
           onChangeCents(parseDollarsToCents(next));
         }}
         onBlur={() => {
+          focused.current = false;
           const cents = parseDollarsToCents(text);
           setText(cents === 0 && text.trim() === "" ? "" : centsToDollarString(cents));
         }}

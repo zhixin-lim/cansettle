@@ -120,6 +120,31 @@ function BillPage() {
     [bill, session.participants],
   );
 
+  // Auto-charge helpers: most Singapore places charge 10% service charge and
+  // 9% GST (GST applies on top of items + service charge, the x1.199 rule).
+  // Toggling one on fills the amount in; the field stays editable, and typing
+  // your own amount switches the auto mode back off.
+  const [autoSC, setAutoSC] = useState(false);
+  const [autoGST, setAutoGST] = useState(false);
+  const itemsSubtotalCents = result?.itemsSubtotalCents ?? 0;
+  const serviceCents = bill?.serviceChargeCents ?? 0;
+
+  useEffect(() => {
+    if (!autoSC || !bill) return;
+    const v = Math.round(itemsSubtotalCents * 0.1);
+    if (v !== bill.serviceChargeCents) {
+      dispatch({ type: "updateBill", id: bill.id, patch: { serviceChargeCents: v } });
+    }
+  }, [autoSC, itemsSubtotalCents, bill, dispatch]);
+
+  useEffect(() => {
+    if (!autoGST || !bill) return;
+    const v = Math.round((itemsSubtotalCents + serviceCents) * 0.09);
+    if (v !== bill.gstCents) {
+      dispatch({ type: "updateBill", id: bill.id, patch: { gstCents: v } });
+    }
+  }, [autoGST, itemsSubtotalCents, serviceCents, bill, dispatch]);
+
   if (!bill || !result) {
     return (
       <Paper>
@@ -169,7 +194,7 @@ function BillPage() {
     <div className="space-y-5">
       {/* ------------------------------------------------ bill entry */}
       <Paper>
-        <PaperTitle subtitle="Type it exactly as printed. We only ever use the service charge and GST you enter.">
+        <PaperTitle subtitle="Type it exactly as printed. Tap auto 10% / 9% to fill in the usual charges, or enter them yourself.">
           The bill
         </PaperTitle>
 
@@ -265,18 +290,44 @@ function BillPage() {
         <DashedRule />
 
         <div className="space-y-2">
-          <ChargeRow label="Service charge">
+          <ChargeRow
+            label="Service charge"
+            action={
+              <AutoToggle
+                on={autoSC}
+                label="10%"
+                ariaLabel="Auto-fill 10% service charge"
+                onClick={() => setAutoSC((v) => !v)}
+              />
+            }
+          >
             <MoneyInput
               aria-label="Service charge"
               valueCents={bill.serviceChargeCents}
-              onChangeCents={(cents) => update({ serviceChargeCents: cents })}
+              onChangeCents={(cents) => {
+                setAutoSC(false);
+                update({ serviceChargeCents: cents });
+              }}
             />
           </ChargeRow>
-          <ChargeRow label="GST">
+          <ChargeRow
+            label="GST"
+            action={
+              <AutoToggle
+                on={autoGST}
+                label="9%"
+                ariaLabel="Auto-fill 9% GST"
+                onClick={() => setAutoGST((v) => !v)}
+              />
+            }
+          >
             <MoneyInput
               aria-label="GST"
               valueCents={bill.gstCents}
-              onChangeCents={(cents) => update({ gstCents: cents })}
+              onChangeCents={(cents) => {
+                setAutoGST(false);
+                update({ gstCents: cents });
+              }}
             />
           </ChargeRow>
           <ChargeRow label="Total on the bill">
@@ -544,15 +595,49 @@ function BillPage() {
 
 function ChargeRow({
   label,
+  action,
   children,
 }: {
   label: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-2">
-      <span className="text-sm text-ink-soft">{label}</span>
+      <span className="flex items-center gap-2 text-sm text-ink-soft">
+        {label}
+        {action}
+      </span>
       {children}
     </div>
+  );
+}
+
+function AutoToggle({
+  on,
+  label,
+  ariaLabel,
+  onClick,
+}: {
+  on: boolean;
+  label: string;
+  ariaLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-2 py-0.5 text-[0.65rem] uppercase tracking-wide transition-colors",
+        on
+          ? "border-rule bg-rule text-paper"
+          : "border-dashed border-paper-line text-ink-soft hover:border-rule",
+      )}
+    >
+      {on ? `${label} ✓` : `auto ${label}`}
+    </button>
   );
 }
