@@ -3,7 +3,6 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MoneyInput } from "@/components/money-input";
-import { ReceiptScan } from "@/components/receipt-scan";
 import { Button } from "@/components/ui/button";
 import {
   Amount,
