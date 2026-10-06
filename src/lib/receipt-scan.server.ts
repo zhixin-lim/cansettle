@@ -45,7 +45,7 @@ function json(body: unknown, status = 200) {
 }
 
 export async function handleScanReceipt(request: Request): Promise<Response> {
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env['LOVABLE_API_KEY'];
   if (!apiKey) return json({ error: "Receipt reading isn't set up yet." }, 500);
 
   let image: string;
