@@ -250,7 +250,7 @@ function BillPage() {
         ) : (
           <ul className="space-y-2">
             {bill.items.map((item) => (
-              <li key={item.id} className="grid grid-cols-[3rem_minmax(0,1fr)] gap-2 sm:grid-cols-[3.5rem_minmax(0,1fr)_7rem]">
+              <li key={item.id} className="grid grid-cols-[15%_minmax(0,1fr)_25%_1.5rem] items-center gap-1">
                 <QtyInput
                   value={item.qty}
                   onCommit={(qty) =>
@@ -261,7 +261,7 @@ function BillPage() {
                       patch: { qty },
                     })
                   }
-                  className="tabular rounded-sm border border-input bg-transparent px-2 py-1.5 text-center text-sm outline-hidden focus:border-rule"
+                  className="tabular min-w-0 w-full rounded-sm border border-input bg-transparent px-1 py-1.5 text-center text-base outline-hidden focus:border-rule"
                 />
                 <input
                   value={item.name}
@@ -275,11 +275,10 @@ function BillPage() {
                       patch: { name: e.target.value.slice(0, 60) },
                     })
                   }
-                  className="min-w-0 rounded-sm border border-input bg-transparent px-2 py-1.5 text-sm outline-hidden focus:border-rule"
+                  className="min-w-0 w-full rounded-sm border border-input bg-transparent px-1 py-1.5 text-base outline-hidden focus:border-rule"
                 />
-                <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
                   <MoneyInput
-                    className="flex-1"
+                    className="min-w-0 w-full [&_input]:pl-4 [&_input]:pr-1 [&_span]:left-1"
                     aria-label="Price per item"
                     valueCents={item.unitPriceCents}
                     onChangeCents={(cents) =>
@@ -291,16 +290,19 @@ function BillPage() {
                       })
                     }
                   />
-                  <button
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() =>
                       dispatch({ type: "removeItem", billId: bill.id, itemId: item.id })
                     }
                     aria-label="Remove item"
-                    className="shrink-0 rounded-sm p-1 text-ink-soft transition-colors hover:text-stamp"
+                    title="Remove item"
+                    className="h-8 w-6 shrink-0 rounded-sm p-0 text-ink-soft transition-colors hover:text-stamp"
                   >
                     <X className="h-4 w-4" />
-                  </button>
-                </div>
+                  </Button>
               </li>
             ))}
           </ul>

@@ -170,6 +170,14 @@
   }
 }
 
+/* Keep editable fields readable and prevent iOS Safari focus zoom, even when
+   a component requests a smaller text utility. */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
 /* A cream receipt slip with torn zigzag edges top and bottom. */
 @utility receipt-paper {
   position: relative;
