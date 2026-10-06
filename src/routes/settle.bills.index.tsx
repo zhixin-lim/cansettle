@@ -71,12 +71,9 @@ function BillsPage() {
           <Plus className="h-5 w-5" /> Enter manually
         </button>
 
-        <button
-          disabled
-          className="mt-3 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-sm border border-dashed border-paper-line px-4 py-3 text-sm text-ink-soft"
-        >
-          <Receipt className="h-4 w-4" /> Upload a receipt — coming soon
-        </button>
+        <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-ink-soft">
+          <Receipt className="h-4 w-4" /> Got a photo? You can scan it inside the bill.
+        </p>
       </Paper>
 
       {session.bills.map((bill, i) => {
