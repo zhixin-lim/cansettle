@@ -67,9 +67,7 @@ function Index() {
         <p className="mx-auto mt-6 max-w-xs text-center text-xs leading-relaxed text-foreground/70">
           Your settlement stays on this device.
           <br />
-          No account. No expense history.
-          <br />
-          Nothing uploaded unless you scan a receipt.
+          No account. No upload. No expense history.
         </p>
       </div>
     </main>

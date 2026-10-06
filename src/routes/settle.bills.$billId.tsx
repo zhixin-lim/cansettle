@@ -3,7 +3,6 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MoneyInput } from "@/components/money-input";
-import { ReceiptScan } from "@/components/receipt-scan";
 import { Button } from "@/components/ui/button";
 import {
   Amount,
@@ -127,7 +126,6 @@ function BillPage() {
   // your own amount switches the auto mode back off.
   const [autoSC, setAutoSC] = useState(false);
   const [autoGST, setAutoGST] = useState(false);
-  const [scanned, setScanned] = useState(false);
   const itemsSubtotalCents = result?.itemsSubtotalCents ?? 0;
   const serviceCents = bill?.serviceChargeCents ?? 0;
 
@@ -211,32 +209,6 @@ function BillPage() {
           placeholder="Name on the receipt"
           className="mt-1 w-full rounded-sm border border-input bg-transparent px-3 py-2 text-sm outline-hidden focus:border-rule focus:ring-1 focus:ring-rule"
         />
-
-        <div className="mt-4">
-          <ReceiptScan
-            hasExisting={bill.items.length > 0}
-            onScanned={(r) => {
-              setAutoSC(false);
-              setAutoGST(false);
-              for (const it of bill.items)
-                dispatch({ type: "removeItem", billId: bill.id, itemId: it.id });
-              for (const it of r.items)
-                dispatch({ type: "addItem", billId: bill.id, item: { ...makeItem(), ...it } });
-              update({
-                ...(r.merchant ? { merchant: r.merchant } : {}),
-                serviceChargeCents: r.serviceChargeCents,
-                gstCents: r.gstCents,
-                totalCents: r.totalCents,
-              });
-              setScanned(true);
-            }}
-          />
-          {scanned ? (
-            <p className="mt-2 text-center text-xs text-stamp">
-              Filled in from the photo — check every line against the receipt before carrying on.
-            </p>
-          ) : null}
-        </div>
 
         <Perforation />
 

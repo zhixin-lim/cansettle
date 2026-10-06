@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettleRouteImport } from './routes/settle'
-import { Route as ApiScanReceiptRouteImport } from './routes/api/scan-receipt'
 import { Route as SettleIndexRouteImport } from './routes/settle.index'
 import { Route as SettleBillsRouteImport } from './routes/settle.bills'
 import { Route as SettleParticipantsRouteImport } from './routes/settle.participants'
@@ -27,11 +26,6 @@ const IndexRoute = IndexRouteImport.update({
 const SettleRoute = SettleRouteImport.update({
   id: '/settle',
   path: '/settle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiScanReceiptRoute = ApiScanReceiptRouteImport.update({
-  id: '/api/scan-receipt',
-  path: '/api/scan-receipt',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettleIndexRoute = SettleIndexRouteImport.update({
@@ -68,7 +62,6 @@ const SettleBillsBillIdRoute = SettleBillsBillIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settle': typeof SettleRouteWithChildren
-  '/api/scan-receipt': typeof ApiScanReceiptRoute
   '/settle/bills': typeof SettleBillsRouteWithChildren
   '/settle/participants': typeof SettleParticipantsRoute
   '/settle/result': typeof SettleResultRoute
@@ -78,7 +71,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/scan-receipt': typeof ApiScanReceiptRoute
   '/settle/participants': typeof SettleParticipantsRoute
   '/settle/result': typeof SettleResultRoute
   '/settle': typeof SettleIndexRoute
@@ -89,7 +81,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/settle': typeof SettleRouteWithChildren
-  '/api/scan-receipt': typeof ApiScanReceiptRoute
   '/settle/bills': typeof SettleBillsRouteWithChildren
   '/settle/participants': typeof SettleParticipantsRoute
   '/settle/result': typeof SettleResultRoute
@@ -102,7 +93,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/settle'
-    | '/api/scan-receipt'
     | '/settle/bills'
     | '/settle/participants'
     | '/settle/result'
@@ -112,7 +102,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api/scan-receipt'
     | '/settle/participants'
     | '/settle/result'
     | '/settle'
@@ -122,7 +111,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/settle'
-    | '/api/scan-receipt'
     | '/settle/bills'
     | '/settle/participants'
     | '/settle/result'
@@ -134,7 +122,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettleRoute: typeof SettleRouteWithChildren
-  ApiScanReceiptRoute: typeof ApiScanReceiptRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -151,13 +138,6 @@ declare module '@tanstack/react-router' {
       path: '/settle'
       fullPath: '/settle'
       preLoaderRoute: typeof SettleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/scan-receipt': {
-      id: '/api/scan-receipt'
-      path: '/api/scan-receipt'
-      fullPath: '/api/scan-receipt'
-      preLoaderRoute: typeof ApiScanReceiptRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settle/': {
@@ -239,7 +219,6 @@ const SettleRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettleRoute: SettleRouteWithChildren,
-  ApiScanReceiptRoute: ApiScanReceiptRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
