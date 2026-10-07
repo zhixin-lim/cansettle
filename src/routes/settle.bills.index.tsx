@@ -72,7 +72,7 @@ function BillsPage() {
         </button>
 
         <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-ink-soft">
-          <Receipt className="h-4 w-4" /> Got a photo? You can scan it inside the bill.
+          <Receipt className="h-4 w-4" /> Type each line off the receipt.
         </p>
       </Paper>
 
