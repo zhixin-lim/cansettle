@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronDown, Copy } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -12,7 +13,8 @@ import {
   Row,
 } from "@/components/receipt";
 import { useSession } from "@/lib/session-store";
-import { calculateSession, formatCents, formatSummary } from "@/lib/settlement";
+import { api, ApiError } from "@/lib/api";
+import { formatCents, formatSummary, itemLinesFor } from "@/lib/settlement";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settle/result")({
@@ -37,14 +39,19 @@ export const Route = createFileRoute("/settle/result")({
 });
 
 function ResultPage() {
-  const { session, hydrated } = useSession();
-  const result = useMemo(() => calculateSession(session), [session]);
+  const { session, hydrated, sessionId, unsavedBillIds } = useSession();
   const [open, setOpen] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ["settlement", sessionId, session.bills.map((b) => b.id).join(",")],
+    queryFn: () => api.getSettlement(sessionId!),
+    enabled: hydrated && !!sessionId,
+    refetchOnMount: "always",
+  });
 
   const nameOf = (id: string) =>
     session.participants.find((p) => p.id === id)?.name ?? "Someone";
 
-  if (!hydrated) {
+  if (!hydrated || (sessionId && query.isPending)) {
     return (
       <Paper>
         <PaperTitle>Adding it up…</PaperTitle>
@@ -52,23 +59,63 @@ function ResultPage() {
     );
   }
 
-  if (!result.ready) {
+  const back = (
+    <Link
+      to="/settle/bills"
+      className="flex w-full items-center justify-center rounded-sm bg-primary px-4 py-3 font-display text-lg text-primary-foreground"
+    >
+      Check the bills
+    </Link>
+  );
+
+  if (query.isError) {
     return (
       <Paper>
-        <PaperTitle subtitle="Every bill needs a payer, every item needs an owner, and each bill has to tally before we can settle.">
-          Not ready to settle yet
+        <PaperTitle subtitle={query.error instanceof ApiError ? query.error.message : "Please try again."}>
+          Couldn&apos;t get the settlement
         </PaperTitle>
         <DashedRule className="mt-6" />
-        <Link
-          to="/settle/bills"
+        <button
+          onClick={() => void query.refetch()}
           className="flex w-full items-center justify-center rounded-sm bg-primary px-4 py-3 font-display text-lg text-primary-foreground"
         >
-          Check the bills
-        </Link>
+          Try again
+        </button>
       </Paper>
     );
   }
 
+  const result = query.data;
+  if (!result || !result.ok || unsavedBillIds.length > 0) {
+    const pending = result && !result.ok ? (result.unassignedItems ?? []) : [];
+    return (
+      <Paper>
+        <PaperTitle subtitle="Every item needs someone assigned, and every bill has to be saved, before we can settle.">
+          Not ready to settle yet
+        </PaperTitle>
+        <DashedRule className="mt-6" />
+        {unsavedBillIds.length > 0 ? (
+          <p className="mb-3 text-sm text-stamp">
+            {unsavedBillIds.length} bill{unsavedBillIds.length === 1 ? "" : "s"} not saved yet — open it and tap
+            &quot;Done with this bill&quot;.
+          </p>
+        ) : null}
+        {pending.length > 0 ? (
+          <>
+            <p className="font-display text-base text-stamp">Still needs assigning:</p>
+            <ul className="mb-3 mt-1 list-disc pl-5 text-sm text-ink">
+              {pending.map((u) => (
+                <li key={u.itemId}>{u.name.trim() || "Unnamed item"}</li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+        {back}
+      </Paper>
+    );
+  }
+
+  const grandTotalCents = result.billResults.reduce((s, r) => s + r.expectedTotalCents, 0);
   const summary = formatSummary(session, result);
 
   const copy = async () => {
@@ -97,11 +144,11 @@ function ResultPage() {
           <ul className="space-y-3">
             {result.transfers.map((t, i) => (
               <li
-                key={`${t.fromId}-${t.toId}-${i}`}
+                key={`${t.from}-${t.to}-${i}`}
                 className="flex items-baseline gap-2"
               >
                 <span className="min-w-0 truncate font-display text-lg">
-                  {nameOf(t.fromId)} → {nameOf(t.toId)}
+                  {nameOf(t.from)} → {nameOf(t.to)}
                 </span>
                 <span className="leader" aria-hidden />
                 <Amount cents={t.amountCents} className="shrink-0 text-lg font-semibold" />
@@ -111,7 +158,7 @@ function ResultPage() {
         )}
 
         <DashedRule />
-        <p className="text-center font-hand text-xl text-stamp">Can settle already.</p>
+        <p className="text-center font-hand text-xl text-stamp">React 🫡 once settled.</p>
       </Paper>
 
       {/* ------------------------------------------- per person */}
@@ -122,12 +169,16 @@ function ResultPage() {
         <ul className="divide-y divide-dashed divide-paper-line">
           {result.balances.map((b) => {
             const isOpen = open === b.participantId;
-            const lines = result.billResults.map((r, i) => ({
-              bill: session.bills[i]!,
-              breakdown: r.breakdowns.find(
-                (x) => x.participantId === b.participantId,
-              )!,
-            }));
+            const lines = result.billResults.map((r) => {
+              const share = r.shares.find((x) => x.participantId === b.participantId);
+              const detail = itemLinesFor(session, r.billId, b.participantId, share?.itemCents ?? 0);
+              return {
+                billId: r.billId,
+                merchant: session.bills.find((x) => x.id === r.billId)?.merchant ?? "",
+                share,
+                ...detail,
+              };
+            });
 
             return (
               <li key={b.participantId} className="py-3">
@@ -159,56 +210,40 @@ function ResultPage() {
 
                 {isOpen ? (
                   <div className="mt-3 rounded-sm border border-dashed border-paper-line p-3">
-                    {lines.map(({ bill, breakdown }) => (
-                      <div key={bill.id} className="mb-4 last:mb-0">
+                    {lines.map(({ billId, merchant, share, lines: items, showCents }) => (
+                      <div key={billId} className="mb-4 last:mb-0">
                         <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-ink-soft">
-                          {bill.merchant.trim() || "Bill"}
+                          {merchant.trim() || "Bill"}
                         </p>
                         <DashedRule className="my-2" />
-                        {breakdown.items.length === 0 ? (
+                        {items.length === 0 ? (
                           <p className="text-xs text-ink-soft">Nothing on this bill.</p>
                         ) : (
-                          breakdown.items.map((line) => (
+                          items.map((line) => (
                             <Row
                               key={line.itemId}
                               label={
                                 <>
                                   {line.itemName.trim() || "Unnamed item"}
                                   {line.assignedQty !== undefined ? (
-                                    <em className="ml-1 text-xs not-italic text-ink-soft">
-                                      ({line.assignedQty} ×)
-                                    </em>
+                                    <em className="ml-1 text-xs not-italic text-ink-soft">({line.assignedQty} ×)</em>
                                   ) : null}
                                   {line.sharedWays > 1 ? (
-                                    <em className="ml-1 text-xs not-italic text-ink-soft">
-                                      (shared {line.sharedWays} ways)
-                                    </em>
+                                    <em className="ml-1 text-xs not-italic text-ink-soft">(shared {line.sharedWays} ways)</em>
                                   ) : null}
                                 </>
                               }
-                              amount={line.shareCents}
+                              amount={showCents ? line.shareCents : ""}
                             />
                           ))
                         )}
                         <DashedRule className="my-2" />
-                        <Row label="Item subtotal" amount={breakdown.subtotalCents} />
-                        {breakdown.serviceChargeCents !== 0 ? (
-                          <Row
-                            label="Service charge"
-                            amount={breakdown.serviceChargeCents}
-                          />
+                        <Row label="Item subtotal" amount={share?.itemCents ?? 0} />
+                        {share?.serviceChargeCents ? (
+                          <Row label="Service charge" amount={share.serviceChargeCents} />
                         ) : null}
-                        {breakdown.gstCents !== 0 ? (
-                          <Row label="GST" amount={breakdown.gstCents} />
-                        ) : null}
-                        {breakdown.roundingCents !== 0 ? (
-                          <Row
-                            label="Rounding residual"
-                            amount={breakdown.roundingCents}
-                            muted
-                          />
-                        ) : null}
-                        <Row label="Total" amount={breakdown.totalCents} strong />
+                        {share?.gstCents ? <Row label="GST" amount={share.gstCents} /> : null}
+                        <Row label="Total" amount={share?.totalCents ?? 0} strong />
                       </div>
                     ))}
 
@@ -229,7 +264,7 @@ function ResultPage() {
         </ul>
 
         <DashedRule />
-        <Row label="Grand total" amount={result.grandTotalCents} strong />
+        <Row label="Grand total" amount={grandTotalCents} strong />
       </Paper>
 
       {/* ------------------------------------------- copy */}
