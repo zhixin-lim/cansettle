@@ -27,8 +27,9 @@ export const Route = createFileRoute("/settle/participants")({
 });
 
 function ParticipantsPage() {
-  const { session, dispatch, hydrated } = useSession();
+  const { session, dispatch, hydrated, actions } = useSession();
   const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const trimmed = name.trim();
   const duplicate = session.participants.some(
@@ -36,9 +37,12 @@ function ParticipantsPage() {
   );
 
   const add = () => {
-    if (!trimmed || duplicate) return;
-    dispatch({ type: "addParticipant", name: trimmed });
-    setName("");
+    if (!trimmed || duplicate || busy) return;
+    setBusy(true);
+    void actions.addParticipant(trimmed).then(() => {
+      setName("");
+      setBusy(false);
+    });
   };
 
   return (
@@ -66,7 +70,7 @@ function ParticipantsPage() {
         <button
           type="submit"
           className="shrink-0 rounded-sm bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-40"
-          disabled={!trimmed || duplicate}
+          disabled={!trimmed || duplicate || busy}
         >
           Add
         </button>
@@ -90,7 +94,7 @@ function ParticipantsPage() {
         <>
         <p className="mb-2 text-xs text-ink-soft">
           Add a PayNow number for anyone who might be paid back — it goes into the
-          message you copy at the end. Optional, and it stays on this device.
+          message you copy at the end. Optional, and it stays on this device — it's never sent anywhere.
         </p>
         <ul className="divide-y divide-dashed divide-paper-line">
           {session.participants.map((p, i) => (
@@ -107,13 +111,14 @@ function ParticipantsPage() {
                     name: e.target.value,
                   })
                 }
+                onBlur={() => void actions.commitRename(p.id)}
                 aria-label={`Name of participant ${i + 1}`}
                 className="min-w-0 flex-1 bg-transparent text-sm outline-hidden"
               />
               <input
                 value={p.phone ?? ""}
                 onChange={(e) =>
-                  dispatch({ type: "setParticipantPhone", id: p.id, phone: e.target.value })
+                  actions.setPhone(p.id, e.target.value)
                 }
                 inputMode="tel"
                 placeholder="PayNow no. (optional)"
@@ -122,7 +127,7 @@ function ParticipantsPage() {
               />
 
               <button
-                onClick={() => dispatch({ type: "removeParticipant", id: p.id })}
+                onClick={() => void actions.removeParticipant(p.id)}
                 aria-label={`Remove ${p.name}`}
                 className="shrink-0 rounded-sm p-1 text-ink-soft transition-colors hover:text-stamp"
               >

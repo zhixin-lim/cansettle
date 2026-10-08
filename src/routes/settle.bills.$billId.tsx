@@ -13,6 +13,8 @@ import {
   Perforation,
   Stamp,
 } from "@/components/receipt";
+import { toast } from "sonner";
+
 import { cn } from "@/lib/utils";
 import { makeItem, useSession } from "@/lib/session-store";
 import {
@@ -111,7 +113,8 @@ export const Route = createFileRoute("/settle/bills/$billId")({
 
 function BillPage() {
   const { billId } = Route.useParams();
-  const { session, dispatch, hydrated } = useSession();
+  const { session, dispatch, hydrated, actions, unsavedBillIds } = useSession();
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   const bill = session.bills.find((b) => b.id === billId);
@@ -584,11 +587,25 @@ function BillPage() {
           Back to bills
         </Link>
         <button
-          onClick={() => navigate({ to: "/settle/bills" })}
-          disabled={missing.length > 0}
+          onClick={async () => {
+            if (!unsavedBillIds.includes(bill.id)) {
+              navigate({ to: "/settle/bills" });
+              return;
+            }
+            setSaving(true);
+            try {
+              await actions.saveBill(bill.id);
+              navigate({ to: "/settle/bills" });
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Couldn't save this bill.");
+            } finally {
+              setSaving(false);
+            }
+          }}
+          disabled={missing.length > 0 || saving}
           className="flex-1 rounded-sm bg-primary px-4 py-3 font-display text-lg text-primary-foreground disabled:opacity-40"
         >
-          Done with this bill
+          {saving ? "Saving…" : "Done with this bill"}
         </button>
       </div>
     </div>

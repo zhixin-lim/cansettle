@@ -216,7 +216,25 @@ describe("quantity assignments", () => {
     const session = { participants: people, bills: [plates] };
     const calculated = calculateSession(session);
     expect(calculated.ready).toBe(true);
-    const summary = formatSummary(session, calculated);
+    const summary = formatSummary(session, {
+      ok: true,
+      balances: calculated.balances,
+      transfers: calculated.transfers.map((t) => ({ from: t.fromId, to: t.toId, amountCents: t.amountCents })),
+      billResults: calculated.billResults.map((r) => ({
+        billId: r.billId,
+        shares: r.breakdowns.map((b) => ({
+          participantId: b.participantId,
+          itemCents: b.subtotalCents,
+          serviceChargeCents: b.serviceChargeCents,
+          gstCents: b.gstCents,
+          totalCents: b.totalCents,
+        })),
+        itemSubtotalCents: r.itemsSubtotalCents,
+        reconciledTotalCents: r.calculatedTotalCents,
+        expectedTotalCents: r.billTotalCents,
+        reconciled: r.reconciles,
+      })),
+    });
     expect(summary).toContain("1x Red plate: $3.00");
     expect(summary).toContain("2x Red plate: $6.00");
     expect(summary).toContain("2x Gold plate: $10.00");
