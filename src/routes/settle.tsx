@@ -24,7 +24,7 @@ const steps = [
 ] as const;
 
 function SettleLayout() {
-  const { dispatch } = useSession();
+  const { actions } = useSession();
   const navigate = useNavigate();
 
   return (
@@ -47,15 +47,15 @@ function SettleLayout() {
                   Start over?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will clear this settlement from this device. Everyone, every
-                  bill, every assignment — gone for good.
+                  This will clear this settlement from this device and start a fresh
+                  one. The old one expires on its own.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Keep it</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
-                    dispatch({ type: "reset" });
+                    actions.startOver();
                     navigate({ to: "/" });
                   }}
                 >

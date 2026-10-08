@@ -3,7 +3,7 @@ import { Plus, Receipt, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 
 import { Amount, DashedRule, Paper, PaperTitle, Stamp } from "@/components/receipt";
-import { makeBill, useSession } from "@/lib/session-store";
+import { useSession } from "@/lib/session-store";
 import { calculateSession } from "@/lib/settlement";
 
 export const Route = createFileRoute("/settle/bills/")({
@@ -28,14 +28,13 @@ export const Route = createFileRoute("/settle/bills/")({
 });
 
 function BillsPage() {
-  const { session, dispatch, hydrated } = useSession();
+  const { session, hydrated, actions, unsavedBillIds } = useSession();
   const navigate = useNavigate();
   const result = useMemo(() => calculateSession(session), [session]);
 
   const addBill = () => {
-    const bill = makeBill();
-    dispatch({ type: "addBill", bill });
-    navigate({ to: "/settle/bills/$billId", params: { billId: bill.id } });
+    const billId = actions.newDraftBill();
+    navigate({ to: "/settle/bills/$billId", params: { billId } });
   };
 
   if (session.participants.length < 2 && hydrated) {
@@ -80,7 +79,8 @@ function BillsPage() {
         const r = result.billResults[i]!;
         const noPayer = bill.payerId === null;
         const unassigned = r.unassignedItems.length;
-        const ok = r.reconciles && unassigned === 0 && !noPayer;
+        const notSaved = unsavedBillIds.includes(bill.id);
+        const ok = r.reconciles && unassigned === 0 && !noPayer && !notSaved;
         const payerName =
           session.participants.find((p) => p.id === bill.payerId)?.name ?? "—";
 
@@ -106,7 +106,9 @@ function BillsPage() {
                 <Stamp>✓ Tallies</Stamp>
               ) : (
                 <Stamp tone="bad">
-                  {noPayer
+                  {notSaved
+                    ? "Not saved — tap Done"
+                    : noPayer
                     ? "No payer yet"
                     : unassigned > 0
                       ? `${unassigned} unassigned`
@@ -122,7 +124,7 @@ function BillsPage() {
                   Open bill
                 </Link>
                 <button
-                  onClick={() => dispatch({ type: "removeBill", id: bill.id })}
+                  onClick={() => void actions.removeBill(bill.id)}
                   aria-label="Delete bill"
                   className="rounded-sm p-1.5 text-ink-soft transition-colors hover:text-stamp"
                 >
@@ -136,7 +138,7 @@ function BillsPage() {
 
       {session.bills.length > 0 ? (
         <Paper>
-          {result.ready ? (
+          {result.ready && unsavedBillIds.length === 0 ? (
             <p className="mb-3 text-center text-sm text-rule">
               Steady — every bill tallies and every item is accounted for ✓
             </p>
@@ -147,7 +149,7 @@ function BillsPage() {
           )}
           <Link
             to="/settle/result"
-            disabled={!result.ready}
+            disabled={!result.ready || unsavedBillIds.length > 0}
             className="flex w-full items-center justify-center rounded-sm bg-primary px-4 py-3 font-display text-lg text-primary-foreground transition-transform hover:-translate-y-0.5 aria-disabled:pointer-events-none aria-disabled:opacity-40"
           >
             Who pays whom?

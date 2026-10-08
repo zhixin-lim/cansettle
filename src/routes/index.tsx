@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Split a one-off group meal down to the cent. No account, no upload, no expense history.",
+          "Split a one-off group meal down to the cent. Nothing permanent, no accounts, no history.",
       },
     ],
   }),
@@ -65,9 +65,10 @@ function Index() {
         </Paper>
 
         <p className="mx-auto mt-6 max-w-xs text-center text-xs leading-relaxed text-foreground/70">
-          Your settlement stays on this device.
+          Nothing permanent — your settlement is kept just long enough to get
+          everyone paid back, then it&apos;s gone.
           <br />
-          No account. No upload. No expense history.
+          No accounts, no history.
         </p>
       </div>
     </main>
