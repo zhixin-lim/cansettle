@@ -13,3 +13,6 @@
 - Quantity assignments must exactly match receipt quantity before settlement; missing or excess units must never be redistributed silently.
 - Keep SessionContext in a dedicated module separate from the provider and reducer so live updates do not recreate the context while mounted consumers still use the previous identity.
 - Enforce the native form-field font-size floor in global CSS outside cascade layers so component text utilities cannot trigger iOS focus zoom.
+- The external CanSettle backend owns sessions, participants, bills, items and allocations; the device stores only the session id, PayNow numbers and merchant names, because the API has no fields for those and they must never be sent.
+- Bills are edited as in-memory drafts and sent on "Done" (create new, then delete the old version), because the API has no bill-update route.
+- The final screen and copied message render the backend settlement as-is; local engine output is only used for bill-entry checks and per-item display lines.
