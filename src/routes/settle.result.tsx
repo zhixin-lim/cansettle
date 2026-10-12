@@ -14,7 +14,13 @@ import {
 } from "@/components/receipt";
 import { useSession } from "@/lib/session-store";
 import { api, ApiError } from "@/lib/api";
-import { formatCents, formatSummary, itemLinesFor } from "@/lib/settlement";
+import {
+  formatCents,
+  formatPersonalMessage,
+  formatSummary,
+  itemLinesFor,
+  personalMessageRecipients,
+} from "@/lib/settlement";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settle/result")({
@@ -118,14 +124,25 @@ function ResultPage() {
   const grandTotalCents = result.billResults.reduce((s, r) => s + r.expectedTotalCents, 0);
   const summary = formatSummary(session, result);
 
-  const copy = async () => {
+  const copyText = async (text: string, done: string, failed: string) => {
     try {
-      await navigator.clipboard.writeText(summary);
-      toast.success("Copied — paste it in the group chat");
+      await navigator.clipboard.writeText(text);
+      toast.success(done);
     } catch {
-      toast.error("Couldn't copy. Select the text below and copy it manually.");
+      toast.error(failed);
     }
   };
+  const copy = () =>
+    copyText(
+      summary,
+      "Copied — paste it in the group chat",
+      "Couldn't copy. Select the text below and copy it manually.",
+    );
+
+  // One message per person who has someone to pay, to forward on its own.
+  const personal = personalMessageRecipients(result)
+    .map((id) => ({ id, name: nameOf(id), text: formatPersonalMessage(session, result, id) }))
+    .filter((p): p is { id: string; name: string; text: string } => p.text !== null);
 
   return (
     <div className="space-y-5">
@@ -281,6 +298,33 @@ function ResultPage() {
           <Copy className="h-4 w-4" /> Copy the message
         </button>
       </Paper>
+
+      {/* ------------------------------------------- one by one */}
+      {personal.length > 0 ? (
+        <Paper>
+          <PaperTitle subtitle="One message per person, to send them directly.">Or one by one</PaperTitle>
+          <DashedRule className="mt-6" />
+          <ul className="space-y-3">
+            {personal.map((person) => (
+              <li key={person.id} className="flex items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-sm font-semibold">{person.name}</span>
+                <button
+                  onClick={() =>
+                    void copyText(
+                      person.text,
+                      `Copied — send it to ${person.name}`,
+                      "Couldn't copy. Please try again.",
+                    )
+                  }
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-foreground/20 px-3 py-2 text-xs text-ink transition-colors hover:bg-foreground/5"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy message
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Paper>
+      ) : null}
     </div>
   );
 }

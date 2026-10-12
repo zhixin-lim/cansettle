@@ -14,6 +14,17 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * The session provider registers here so that ANY request that finds the
+ * settlement gone (expired = 410, or unknown = 404 "Session not found") can
+ * trigger the same friendly "this settlement has expired" prompt.
+ */
+let sessionGoneListener: (() => void) | null = null;
+export function onSessionGone(listener: (() => void) | null) {
+  sessionGoneListener = listener;
+}
+export const SESSION_EXPIRED = "SESSION_EXPIRED";
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
@@ -35,6 +46,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
   if (!res.ok) {
     const d = (data ?? {}) as { error?: string; code?: string };
+    const gone = res.status === 410 || (res.status === 404 && d.error === "Session not found");
+    if (gone) {
+      sessionGoneListener?.();
+      throw new ApiError("This settlement has expired.", res.status, SESSION_EXPIRED);
+    }
     throw new ApiError(d.error ?? `Something went wrong (${res.status}).`, res.status, d.code);
   }
   return data as T;
@@ -52,6 +68,8 @@ export type ApiItem = {
 };
 export type ApiBill = {
   id: string;
+  /** Optional shop name. Null on bills saved before the backend stored names. */
+  name?: string | null;
   payerId: string;
   serviceChargeCents: number;
   gstCents: number;
@@ -103,6 +121,7 @@ export const api = {
   createBill: (
     sid: string,
     bill: {
+      name?: string;
       payerId: string;
       serviceChargeCents: number;
       gstCents: number;

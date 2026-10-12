@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SessionProvider } from "../lib/session-store";
+import { ExpiredDialog } from "../components/expired-dialog";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
@@ -52,8 +53,8 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. Your settlement is still saved on this
-          device — try again or head back home.
+          Something went wrong on our end. Your settlement is still saved —
+          try again or head back home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -134,6 +135,7 @@ function RootComponent() {
       <SessionProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <ExpiredDialog />
         <Toaster position="top-center" />
       </SessionProvider>
     </QueryClientProvider>

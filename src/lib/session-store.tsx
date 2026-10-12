@@ -3,16 +3,19 @@
  *
  * The backend owns sessions, participants, bills, items and allocations (all
  * ids are backend UUIDs). The device keeps only: the current session id (to
- * reopen it), optional PayNow numbers and merchant names (never sent), and
- * bills still being typed in (in memory until "Done with this bill").
+ * reopen it), optional PayNow numbers (never sent), and bills still being
+ * typed in (in memory until "Done with this bill"). Shop names are stored on
+ * the backend with the bill; a device copy is only kept for older bills the
+ * backend has no name for.
  * No user-entered data is ever logged.
  */
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { api, ApiError, type ApiAllocation, type ApiSession } from "./api";
+import { api, ApiError, onSessionGone, SESSION_EXPIRED, type ApiAllocation, type ApiSession } from "./api";
 import type { Bill, BillItem, Participant, Session } from "./settlement";
 import { SessionContext, type SessionContextValue } from "./session-context";
+import { parseSessionParam, withoutSessionParam } from "./session-link";
 
 const DEVICE_KEY = "cansettle.device.v1";
 const LEGACY_KEY = "settle-makan.session.v1";
@@ -183,7 +186,7 @@ function fromApi(s: ApiSession, notes: DeviceNotes): Session {
   }));
   const bills: Bill[] = s.bills.map((b) => ({
     id: b.id,
-    merchant: notes.merchants[b.id] ?? "",
+    merchant: b.name ?? notes.merchants[b.id] ?? "",
     payerId: b.payerId,
     serviceChargeCents: b.serviceChargeCents,
     gstCents: b.gstCents,
@@ -219,6 +222,7 @@ function allocationOf(item: BillItem): ApiAllocation[] {
 const ALLOCATION_KEYS = new Set(["ownerIds", "ownerQuantities"]);
 
 function showError(e: unknown) {
+  if (e instanceof ApiError && e.code === SESSION_EXPIRED) return; // the expired dialog covers this
   toast.error(e instanceof ApiError ? e.message : "Something went wrong. Please try again.");
 }
 
@@ -229,6 +233,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [unsaved, setUnsaved] = useState<string[]>([]);
+  const [expired, setExpired] = useState(false);
 
   const sessionRef = useRef(session);
   const unsavedRef = useRef(unsaved);
@@ -264,8 +269,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [commit, setUnsavedIds],
   );
 
+  // Any request that finds the settlement gone shows the expired prompt.
+  useEffect(() => {
+    onSessionGone(() => setExpired(true));
+    return () => onSessionGone(null);
+  }, []);
+
   useEffect(() => {
     const notes = readNotes();
+    // A link like ?session=<id> resumes that settlement instead of the saved one.
+    const linked = parseSessionParam(window.location.search);
+    if (linked && linked !== notes.sessionId) {
+      notes.sessionId = linked;
+      writeNotes(notes);
+    }
+    const tidyUrl = () => {
+      if (linked) window.history.replaceState(window.history.state, "", withoutSessionParam(window.location.href));
+    };
     notesRef.current = notes;
     setSessionId(notes.sessionId);
     if (!notes.sessionId) {
@@ -273,10 +293,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       return;
     }
     loadFromServer(notes.sessionId)
+      .then(tidyUrl)
       .catch((e) => {
-        if (e instanceof ApiError && (e.status === 404 || e.status === 410)) {
+        if (e instanceof ApiError && e.code === SESSION_EXPIRED) {
           saveNotes({ ...emptyNotes });
-          toast("That settlement has expired — starting fresh.");
+          setExpired(true);
+          tidyUrl();
         } else showError(e);
       })
       .finally(() => setHydrated(true));
@@ -308,11 +330,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (action.type === "updateBill") {
         const keys = Object.keys(action.patch);
         if (keys.length === 1 && keys[0] === "merchant") {
-          if (!isDraft(billId)) {
-            saveNotes({
-              merchants: { ...notesRef.current.merchants, [billId]: action.patch.merchant ?? "" },
-            });
-          }
+          // The shop name is stored with the bill on the backend, and there is no
+          // bill-update route, so a saved bill is re-sent on "Done" like any other edit.
+          if (!isDraft(billId)) markUnsaved(billId);
           return;
         }
       }
@@ -333,7 +353,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       }
       markUnsaved(billId);
     },
-    [commit, markUnsaved, saveNotes],
+    [commit, markUnsaved],
   );
 
   const actions = useMemo<SessionContextValue["actions"]>(
@@ -391,6 +411,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (!bill || !bill.payerId) throw new Error("Bill not ready");
         const sid = await ensureSession();
         const created = await api.createBill(sid, {
+          ...(bill.merchant.trim() ? { name: bill.merchant.trim() } : {}),
           payerId: bill.payerId,
           serviceChargeCents: bill.serviceChargeCents,
           gstCents: bill.gstCents,
@@ -412,7 +433,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // Replace the old saved version only after the new one is in.
         if (!isDraft(billId)) await api.removeBill(sid, billId).catch(() => undefined);
         const { [billId]: _old, ...merchants } = notesRef.current.merchants;
-        saveNotes({ merchants: { ...merchants, [created.id]: bill.merchant } });
+        // Only keep a device copy if the backend didn't store the name (older backend).
+        const keepLocal = bill.merchant.trim() !== "" && !created.name;
+        saveNotes({ merchants: keepLocal ? { ...merchants, [created.id]: bill.merchant } : merchants });
         commit({ ...sessionRef.current, bills: sessionRef.current.bills.filter((b) => b.id !== billId) });
         setUnsavedIds(unsavedRef.current.filter((id) => id !== billId));
         await loadFromServer(sid);
@@ -433,6 +456,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (sid) await loadFromServer(sid).catch(showError);
       },
       startOver: () => {
+        setExpired(false);
         saveNotes({ ...emptyNotes });
         commit(emptySession);
         setUnsavedIds([]);
@@ -442,8 +466,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ session, dispatch, hydrated, sessionId, unsavedBillIds: unsaved, actions }),
-    [session, dispatch, hydrated, sessionId, unsaved, actions],
+    () => ({ session, dispatch, hydrated, sessionId, expired, unsavedBillIds: unsaved, actions }),
+    [session, dispatch, hydrated, sessionId, expired, unsaved, actions],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

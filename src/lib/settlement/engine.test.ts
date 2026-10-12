@@ -235,9 +235,10 @@ describe("quantity assignments", () => {
         reconciled: r.reconciles,
       })),
     });
-    expect(summary).toContain("1x Red plate: $3.00");
-    expect(summary).toContain("2x Red plate: $6.00");
-    expect(summary).toContain("2x Gold plate: $10.00");
+    // The group message lists item names only; per-item amounts live in each
+    // person's own message (see summary.test.ts).
+    expect(summary).toContain("1x Red plate, 2x Gold plate");
+    expect(summary).toContain("2x Red plate, 2x Gold plate");
     expect(summary).toContain("React 🫡 once settled.");
     expect(summary).not.toContain("Can settle already");
   });

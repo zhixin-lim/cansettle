@@ -23,6 +23,8 @@ export type SessionContextValue = {
   dispatch: (action: SessionAction) => void;
   hydrated: boolean;
   sessionId: string | null;
+  /** True when the settlement on screen has expired or no longer exists. */
+  expired: boolean;
   /** Bills with changes not yet saved to the backend. */
   unsavedBillIds: string[];
   actions: SessionActions;
