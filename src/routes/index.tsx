@@ -8,13 +8,13 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Settle This Makan — split the bill, no drama" },
+      { title: "CanSettle — split the bill, no drama" },
       {
         name: "description",
         content:
           "Add everyone, add the bills, say who had what. Exact shares, a clear breakdown and a message you can paste into the group chat.",
       },
-      { property: "og:title", content: "Settle This Makan" },
+      { property: "og:title", content: "CanSettle" },
       {
         property: "og:description",
         content:

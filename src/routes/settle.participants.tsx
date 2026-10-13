@@ -10,7 +10,7 @@ export const Route = createFileRoute("/settle/participants")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Who's splitting this? — Settle This Makan" },
+      { title: "Who's splitting this? — CanSettle" },
       {
         name: "description",
         content:

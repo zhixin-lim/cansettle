@@ -11,7 +11,7 @@ export const Route = createFileRoute("/settle/bills/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Add a bill — Settle This Makan" },
+      { title: "Add a bill — CanSettle" },
       {
         name: "description",
         content:

@@ -95,7 +95,7 @@ export const Route = createFileRoute("/settle/bills/$billId")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Bill details — Settle This Makan" },
+      { title: "Bill details — CanSettle" },
       {
         name: "description",
         content:

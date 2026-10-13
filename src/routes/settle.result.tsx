@@ -28,7 +28,7 @@ export const Route = createFileRoute("/settle/result")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Who pays whom? — Settle This Makan" },
+      { title: "Who pays whom? — CanSettle" },
       {
         name: "description",
         content:

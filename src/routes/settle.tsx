@@ -35,7 +35,7 @@ function SettleLayout() {
             to="/"
             className="min-w-0 truncate font-display text-lg tracking-tight text-foreground"
           >
-            Settle this makan
+            CanSettle
           </Link>
           <AlertDialog>
             <AlertDialogTrigger className="shrink-0 rounded-sm border border-foreground/20 px-3 py-1.5 text-xs text-foreground/70 transition-colors hover:bg-foreground/5">
